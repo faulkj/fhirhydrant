@@ -55,21 +55,6 @@ const parse = (): { definitions: ResourceDefinition[]; scopes: string[] } => {
 
          const schema = z.object(shape)
 
-         entry.requireOneOf && schema.superRefine((args, ctx) => {
-            const
-               filled = Object.entries(args).filter(([, v]) => v !== undefined && v !== ""),
-               isDirectRead = entry.supportsDirectRead && filled.length === 1 && filled[0][0] === "_id"
-            if (isDirectRead) return
-            const hasRequired = entry.requireOneOf!.some((k) => {
-               const v = args[k as keyof typeof args]
-               return typeof v === "string" && v !== ""
-            })
-            hasRequired || ctx.addIssue({
-               code: z.ZodIssueCode.custom,
-               message: `Search requires at least one of: ${entry.requireOneOf!.join(", ")}`,
-            })
-         })
-
          return {
             resourceType: entry.resourceType,
             toolName: entry.toolName,
