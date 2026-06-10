@@ -43,6 +43,7 @@
    "scripts": {
       "check": "tsc --noEmit",
       "build": "tsup ts/server.ts --format esm --out-dir .out --no-splitting --platform node --clean",
+      "prepublishOnly": "npm run build",
       "start": "node .out/server.js",
       "dev": "node --env-file=.env --experimental-strip-types --watch ts/server.ts",
       "inspector": "npx @modelcontextprotocol/inspector"
