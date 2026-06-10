@@ -280,7 +280,3 @@ Output goes to `.out/server.js`.
   policies meet your compliance requirements.
 - **Health endpoint:** `GET /health` returns `{"status":"ok"}` for liveness
   probes. No authentication, no PHI.
-
-## License
-
-[Unlicense](LICENSE.md) — public domain.
