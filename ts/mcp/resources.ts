@@ -32,7 +32,13 @@ const
       return otherKeys ? undefined : id
    },
    makeHandler =
-      (def: ResourceDefinition) => async (args: Record<string, unknown>) => {
+      (toolName: string) => async (args: Record<string, unknown>) => {
+         const def = getDefinitions().find((d) => d.toolName === toolName)
+         if (!def)
+            return {
+               content: [{ type: "text" as const, text: `Tool "${toolName}" is no longer in definitions — restart to apply definition changes` }],
+               isError: true,
+            }
          const
             directId = isDirectRead(args, def.supportsDirectRead),
             cap = checkRuntimeCapability(def, args, directId)
@@ -101,6 +107,6 @@ export const registerAll = (server: McpServer): void => {
       server.registerTool(
          def.toolName,
          { description: def.description, inputSchema: def.searchSchema },
-         makeHandler(def),
+         makeHandler(def.toolName),
       )
 }
