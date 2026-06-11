@@ -132,7 +132,7 @@ To rotate:
 | `BIND_HOST`               | `127.0.0.1`           | Bind address for HTTP listener — set to `0.0.0.0` for container/LAN access |
 | `ALLOWED_HOSTS`           | —                     | Comma-separated hostnames for DNS rebinding protection            |
 | `DEBUG`                   | `false`               | Enable verbose FHIR request logging (**may log PHI** — see below) |
-| `FHIR_METADATA_MODE`      | `strict`              | How to handle `/metadata` mismatches: `strict` blocks calls to unadvertised params and skips tools for absent resource types; `warn` logs warnings but allows all calls; `off` disables all metadata checks |
+| `FHIR_METADATA_MODE`      | `strict`              | How to handle `/metadata` mismatches: `strict` blocks calls to unadvertised params; `warn` logs warnings but allows calls with unadvertised params; both modes skip tools whose resource type is entirely absent from `/metadata`; `off` disables all metadata checks |
 
 When both a derived URL and an explicit override are available, the explicit
 override takes precedence.
