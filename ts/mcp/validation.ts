@@ -3,9 +3,8 @@ import { isMetadataAvailable, getResourceMeta, setSkippedTools } from "../fhir/m
 
 /**
  * Filters definitions against cached /metadata.
- * - Removes tools whose resourceType is absent from metadata.
- * - In strict mode, skips tools with unadvertised searchParams.
- * - In warn mode, logs warnings for unadvertised params.
+ * - Removes tools whose resourceType is entirely absent from metadata (all modes).
+ * - Logs a warning for unadvertised searchParams (enforcement is deferred to checkRuntimeCapability).
  * - Returns definitions unchanged when metadata is unavailable or mode is "off".
  */
 export const filterAndValidateDefinitions = (defs: ResourceDefinition[]): ResourceDefinition[] => {
@@ -34,22 +33,13 @@ export const filterAndValidateDefinitions = (defs: ResourceDefinition[]): Resour
       if (!meta.interactions.has("search-type") && !meta.interactions.has("search"))
          console.warn(`[metadata] ${def.resourceType} does not advertise search — search may fail`)
 
-      let skip = false
       for (const param of Object.keys(def.searchParams)) {
          if (param === "_id") continue
-         if (!meta.searchParams.has(param)) {
-            const msg = `[metadata] ${def.resourceType}: "${param}" not in /metadata`
-            if (config.metadataMode === "strict") {
-               console.error(`${msg} — tool "${def.toolName}" skipped. Remove from definitions.json or set FHIR_METADATA_MODE=warn.`)
-               skipped.push({ toolName: def.toolName, reason: `param "${param}" not in /metadata` })
-               skip = true
-               break
-            } else
-               console.warn(`${msg} — this call may be vendor-specific.`)
-         }
+         if (!meta.searchParams.has(param))
+            console.warn(`[metadata] ${def.resourceType}: "${param}" not in /metadata — calls using this param will be blocked in strict mode`)
       }
 
-      if (!skip) enabled.push(def)
+      enabled.push(def)
    }
 
    setSkippedTools(skipped)
