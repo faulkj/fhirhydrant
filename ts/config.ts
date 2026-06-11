@@ -23,6 +23,14 @@ const
          throw new Error(`Invalid PORT="${raw}" — must be 1–65535`)
       return port
    },
+   parseMetadataMode = (): Config["metadataMode"] => {
+      const val = (opt("FHIR_METADATA_MODE") ?? "strict").toLowerCase()
+      if (val !== "strict" && val !== "warn" && val !== "off")
+         throw new Error(
+            `Invalid FHIR_METADATA_MODE="${val}" — must be "strict", "warn", or "off"`,
+         )
+      return val as Config["metadataMode"]
+   },
    parseAllowedHosts = (): string[] | undefined =>
       opt("ALLOWED_HOSTS")
          ?.split(",")
@@ -72,6 +80,7 @@ export const config: Config = {
    allowedHosts: parseAllowedHosts(),
    transport: parseTransport(),
    debug: opt("DEBUG")?.toLowerCase() === "true",
+   metadataMode: parseMetadataMode(),
 }
 
 if (!config.fhirKeys.some((k) => k.kid === config.fhirActiveKey))

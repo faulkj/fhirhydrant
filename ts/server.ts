@@ -8,6 +8,7 @@ import { config } from "./config.ts"
 import { startAuth, stopAuth, restartAuth } from "./fhir/auth.ts"
 import { getDefinitionsPath, reloadDefinitions, getScopes } from "./fhir/definitions.ts"
 import { jwksHandler } from "./fhir/jwks.ts"
+import { fetchMetadata } from "./fhir/metadata.ts"
 import { registerAll, registerCoreTools } from "./fhir/registry.ts"
 
 const
@@ -46,6 +47,7 @@ const
                ok = reloadDefinitions()
             if (!ok) return
             console.log(`[definitions] Reloaded from ${watchFile}`)
+            console.log("[definitions] Metadata cache may be stale — restart to re-validate against /metadata")
             if (getScopes().join(",") !== prevScopes) {
                if (restartingAuth)
                   return void console.log(
@@ -72,7 +74,10 @@ const
       console.log(`[definitions] Watching ${watchFile} for changes`)
    },
 
-   startHttp = async (): Promise<() => Promise<void>> => {
+   startHttp = async (): Promise<{
+      attach: (s: McpServer) => Promise<void>
+      close: () => Promise<void>
+   }> => {
       const
          { createMcpExpressApp } =
             await import("@modelcontextprotocol/express"),
@@ -83,12 +88,11 @@ const
                { allowedHosts: config.allowedHosts }
             :  undefined,
          ),
-         server = makeServer(),
          transport = new NodeStreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
          })
 
-      await server.connect(transport)
+      let mcpReady = false
 
       app.get("/health", (_req: Req, res: Res) => res.json({ status: "ok" }))
 
@@ -99,6 +103,8 @@ const
          console.log("[jwks] External JWKS URL configured — /jwks disabled")
 
       app.all("/mcp", async (req: Req, res: Res) => {
+         if (!mcpReady)
+            return void res.status(503).json({ status: "starting" })
          const
             body = req.body as Record<string, unknown> | undefined,
             method = body?.method ?? req.method
@@ -122,25 +128,34 @@ const
          })
       })
 
-      return () =>
-         new Promise<void>((resolve) => {
-            void transport.close()
-            void server.close()
-            httpServer.close(() => resolve())
-            setTimeout(() => resolve(), 5000)
-         })
+      return {
+         attach: async (s: McpServer) => {
+            await s.connect(transport)
+            mcpReady = true
+         },
+         close: () =>
+            new Promise<void>((resolve) => {
+               void transport.close()
+               httpServer.close(() => resolve())
+               setTimeout(() => resolve(), 5000)
+            }),
+      }
    },
-   
-   startStdio = async (): Promise<() => Promise<void>> => {
+
+   startStdio = async (): Promise<{
+      attach: (s: McpServer) => Promise<void>
+      close: () => Promise<void>
+   }> => {
       console.log = (...args: unknown[]) => console.error(...args)
-      const
-         server = makeServer(),
-         transport = new StdioServerTransport()
-      await server.connect(transport)
-      console.log("fhirhydrant running in stdio mode")
-      return async () => {
-         await transport.close()
-         await server.close()
+      const transport = new StdioServerTransport()
+      return {
+         attach: async (s: McpServer) => {
+            await s.connect(transport)
+            console.log("fhirhydrant running in stdio mode")
+         },
+         close: async () => {
+            await transport.close()
+         },
       }
    }
 
@@ -148,9 +163,14 @@ const selfHostJwks = config.transport === "http" && !config.fhirJwksUrl
 
 if (!selfHostJwks) await startAuth()
 
-const close = config.transport === "stdio" ? await startStdio() : await startHttp()
+const { attach, close } = config.transport === "stdio" ? await startStdio() : await startHttp()
 
 if (selfHostJwks) await startAuth()
+
+if (config.metadataMode !== "off") await fetchMetadata()
+
+const server = makeServer()
+await attach(server)
 
 process.env["NODE_ENV"] !== "production" && startDefinitionsWatcher()
 
@@ -161,6 +181,7 @@ const shutdown = async (code = 0): Promise<void> => {
    shutdownInProgress = true
    console.log("Shutting down...")
    stopAuth()
+   await server.close()
    await close()
    process.exit(code)
 }

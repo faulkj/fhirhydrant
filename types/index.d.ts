@@ -15,6 +15,7 @@ interface ResourceDefinition {
    description: string
    supportsDirectRead: boolean
    requireOneOf?: string[]
+   searchParams: Record<string, string>
    searchSchema: import("zod").ZodObject<import("zod").ZodRawShape>
 }
 
@@ -46,6 +47,7 @@ interface Config {
    allowedHosts: string[] | undefined
    transport: "http" | "stdio"
    debug: boolean
+   metadataMode: "strict" | "warn" | "off"
 }
 
 /** Getter-backed token response compatible with fhirclient — access_token always reflects the latest issued token. */
@@ -64,6 +66,32 @@ type SmartNamespace = {
 
 /** fhirclient instance type. */
 type FhirClient = ReturnType<typeof import("fhirclient").client>
+
+/** Parsed capability metadata for a single FHIR resource type (internal fast-lookup shape). */
+interface ResourceMeta {
+   interactions: Set<string>
+   searchParams: Set<string>
+   includes: string[]
+   operations: string[]
+}
+
+/** Trimmed, JSON-serializable summary of the FHIR server's CapabilityStatement. */
+interface CapabilitySummary {
+   serverUrl: string
+   fetchedAt: string
+   mode: Config["metadataMode"]
+   resources: Array<{
+      type: string
+      interactions: string[]
+      searchParams: string[]
+      operations: string[]
+      includes: string[]
+   }>
+   skippedTools: Array<{
+      toolName: string
+      reason: string
+   }>
+}
 
 /** Express Request alias for MCP HTTP handler typing. */
 type Req = import("express").Request

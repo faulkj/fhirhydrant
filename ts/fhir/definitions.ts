@@ -61,6 +61,7 @@ const parse = (): { definitions: ResourceDefinition[]; scopes: string[] } => {
             description: entry.description,
             supportsDirectRead: entry.supportsDirectRead,
             requireOneOf: entry.requireOneOf,
+            searchParams: params,
             searchSchema: schema,
          }
       }),

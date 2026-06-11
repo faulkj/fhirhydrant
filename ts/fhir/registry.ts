@@ -3,36 +3,8 @@ import { z } from "zod"
 import { config } from "../config.ts"
 import { getDefinitions } from "./definitions.ts"
 import { createFhirClient } from "./client.ts"
-
-const
-   retryable = (err: unknown): boolean => {
-      if (err instanceof Error) {
-         const msg = err.message.toLowerCase()
-         return (
-            msg.includes("econnreset") ||
-            msg.includes("epipe") ||
-            msg.includes("etimedout") ||
-            msg.includes("socket hang up") ||
-            msg.includes("forcibly closed") ||
-            msg.includes("network") ||
-            msg.includes("fetch failed")
-         )
-      }
-      return false
-   },
-   withRetry = async <T>(label: string, fn: () => Promise<T>, attempts = 3): Promise<T> => {
-      for (let i = 0; i < attempts; i++) {
-         try {
-            return await fn()
-         } catch (err) {
-            if (i + 1 >= attempts || !retryable(err)) throw err
-            const delay = 1000 * 2 ** i
-            console.warn(`[fhir] ${label} transient error, retrying in ${delay}ms (${i + 1}/${attempts})`)
-            await new Promise((r) => setTimeout(r, delay))
-         }
-      }
-      throw new Error("unreachable")
-   }
+import { withRetry } from "./utils.ts"
+import { filterAndValidateDefinitions, checkRuntimeCapability, fetchMetadata, getCapabilitySummary } from "./metadata.ts"
 
 const
    buildSearchUrl = (
@@ -62,7 +34,14 @@ const
    },
    makeHandler =
       (def: ResourceDefinition) => async (args: Record<string, unknown>) => {
-         const directId = isDirectRead(args, def.supportsDirectRead)
+         const
+            directId = isDirectRead(args, def.supportsDirectRead),
+            cap = checkRuntimeCapability(def, args, directId)
+         if (cap.error)
+            return {
+               content: [{ type: "text" as const, text: cap.error }],
+               isError: true,
+            }
          if (!directId && def.requireOneOf) {
             const ok = def.requireOneOf.some((k) => {
                const v = args[k]
@@ -100,13 +79,12 @@ const
                   :  ((result as Record<string, unknown>)?.resourceType ??
                      "ok")
             console.log(`[fhir] ${def.resourceType} OK ${summary}`)
+            const text =
+               cap.warning ?
+                  `${cap.warning}\n\n${JSON.stringify(result, null, 2)}`
+               :  JSON.stringify(result, null, 2)
             return {
-               content: [
-                  {
-                     type: "text" as const,
-                     text: JSON.stringify(result, null, 2),
-                  },
-               ],
+               content: [{ type: "text" as const, text }],
             }
          } catch (err) {
             const message = err instanceof Error ? err.message : String(err)
@@ -120,7 +98,7 @@ const
 
 /** Registers an MCP tool for every ResourceDefinition in the current snapshot. */
 export const registerAll = (server: McpServer): void => {
-   for (const def of getDefinitions())
+   for (const def of filterAndValidateDefinitions(getDefinitions()))
       server.registerTool(
          def.toolName,
          { description: def.description, inputSchema: def.searchSchema },
@@ -204,6 +182,49 @@ export const registerCoreTools = (server: McpServer): void => {
                      text: `${message}\n\nRetry with the same url to resume from this page.`,
                   },
                ],
+               isError: true,
+            }
+         }
+      },
+   )
+
+   server.registerTool(
+      "capabilities",
+      {
+         description:
+            "Returns a summary of the FHIR server's capabilities from /metadata (CapabilityStatement). " +
+            "Shows supported resource types, their interactions, search parameters, and any tools that were skipped. " +
+            "Call this before clinical queries to understand what the server supports. " +
+            "Set refresh=true to re-fetch /metadata from the server.",
+         inputSchema: z.object({
+            refresh: z
+               .boolean()
+               .optional()
+               .describe("Re-fetch /metadata from the server before returning the summary"),
+         }),
+      },
+      async (args: { refresh?: boolean }) => {
+         try {
+            if (args.refresh) await fetchMetadata()
+            const summary = getCapabilitySummary()
+            if (!summary)
+               return {
+                  content: [{
+                     type: "text" as const,
+                     text: "No /metadata available. The server may not support CapabilityStatement, or FHIR_METADATA_MODE is set to off.",
+                  }],
+               }
+            return {
+               content: [{
+                  type: "text" as const,
+                  text: JSON.stringify(summary, null, 2),
+               }],
+            }
+         } catch (err) {
+            const message = err instanceof Error ? err.message : String(err)
+            console.error(`[metadata] capabilities ERR ${message}`)
+            return {
+               content: [{ type: "text" as const, text: message }],
                isError: true,
             }
          }
