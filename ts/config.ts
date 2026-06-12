@@ -44,6 +44,16 @@ const
          throw new Error(`Invalid ${key}="${raw}" — must be a positive integer`)
       return val
    },
+   parseAuditSinks = (): AuditSinkName[] => {
+      const
+         raw = opt("FHIR_AUDIT_SINK"),
+         valid = new Set<AuditSinkName>(["console", "file"]),
+         names = raw?.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean) ?? [],
+         good = names.filter((n): n is AuditSinkName => valid.has(n as AuditSinkName)),
+         bad = names.filter((n) => !valid.has(n as AuditSinkName))
+      bad.length && console.warn(`[audit] Ignoring unknown audit sinks: ${bad.join(", ")}`)
+      return good
+   },
    parseKeys = (): KeyPair[] => {
       const
          raw = get("FHIR_PRIVATE_KEY"),
@@ -92,6 +102,8 @@ export const config: Config = {
    fhirDefaultCount: parsePositiveInt("FHIR_DEFAULT_COUNT", 20),
    fhirMaxCount: parsePositiveInt("FHIR_MAX_COUNT", 100),
    fhirMaxResponseBytes: parsePositiveInt("FHIR_MAX_RESPONSE_BYTES", 65536),
+   auditSinks: parseAuditSinks(),
+   auditFile: opt("FHIR_AUDIT_FILE") ?? "./audit.jsonl",
 }
 
 if (!config.fhirKeys.some((k) => k.kid === config.fhirActiveKey))

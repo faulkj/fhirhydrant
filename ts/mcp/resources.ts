@@ -3,8 +3,9 @@ import { config } from "../config.ts"
 import { getDefinitions } from "../fhir/definitions.ts"
 import { createFhirClient } from "../fhir/client.ts"
 import { withRetry, enforceByteLimit } from "../utils.ts"
+import { emitAudit, auditTime, errorStatus } from "../audit.ts"
 import { canShapeCount, buildSearchUrl } from "./shaping.ts"
-import { responseNote } from "./response-notes.ts"
+import { responseNote, bundleStats } from "./response-notes.ts"
 import { filterAndValidateDefinitions, checkRuntimeCapability } from "./validation.ts"
 
 const
@@ -33,32 +34,26 @@ const
             }
          const
             directId = isDirectRead(args, def.supportsDirectRead),
-            cap = checkRuntimeCapability(def, args, directId)
-         if (cap.error)
-            return {
-               content: [{ type: "text" as const, text: cap.error }],
-               isError: true,
-            }
+            op: AuditEvent["operation"] = directId ? "read" : "search",
+            cap = checkRuntimeCapability(def, args, directId),
+            t0 = Date.now()
+         if (cap.error) {
+            emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "blocked", durationMs: auditTime(t0), metadataBlocked: true })
+            return { content: [{ type: "text" as const, text: cap.error }], isError: true }
+         }
          if (!directId && def.requireOneOf) {
-            const ok = def.requireOneOf.some((k) => {
-               const v = args[k]
-               return typeof v === "string" && v !== ""
-            })
-            if (!ok)
-               return {
-                  content: [{ type: "text" as const, text: `Search requires at least one of: ${def.requireOneOf.join(", ")}` }],
-                  isError: true,
-               }
+            const ok = def.requireOneOf.some((k) => { const v = args[k]; return typeof v === "string" && v !== "" })
+            if (!ok) {
+               emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "blocked", durationMs: auditTime(t0), validationBlocked: true })
+               return { content: [{ type: "text" as const, text: `Search requires at least one of: ${def.requireOneOf.join(", ")}` }], isError: true }
+            }
          }
          try {
             const
                shape = directId ? { allowed: false } : canShapeCount(def.resourceType),
                client = createFhirClient(),
-               url =
-                  directId ?
-                     `${def.resourceType}/${directId}`
-                  :  buildSearchUrl(def.resourceType, args, shape.allowed),
-               op = directId ? "read" : "search"
+               search = directId ? undefined : buildSearchUrl(def.resourceType, args, shape.allowed),
+               url = directId ? `${def.resourceType}/${directId}` : search!.url
 
             config.debug ?
                console.log(`[fhir] ${def.resourceType} ${op} → ${url}`)
@@ -66,29 +61,24 @@ const
 
             const
                result = await withRetry(`${def.resourceType} ${op}`, () => client.request(url)),
-               summary =
-                  (
-                     result &&
-                     typeof result === "object" &&
-                     (result as Record<string, unknown>).resourceType ===
-                        "Bundle"
-                  ) ?
-                     `Bundle total=${(result as Record<string, unknown>).total ?? "?"}`
-                  :  ((result as Record<string, unknown>)?.resourceType ??
-                     "ok")
-            console.log(`[fhir] ${def.resourceType} OK ${summary}`)
-            const
                json = JSON.stringify(result, null, 2),
+               stats = bundleStats(result, json),
                notes = [
                   cap.warning,
                   shape.warn ? `Note: _count was injected but ${def.resourceType} does not advertise it in /metadata.` : undefined,
                   responseNote(result, json),
                ].filter(Boolean),
                prefix = notes.length ? notes.join("\n") + "\n\n" : "",
-               shaped = enforceByteLimit(
-                  `${prefix}${json}`,
-                  config.fhirMaxResponseBytes,
-               )
+               shaped = enforceByteLimit(`${prefix}${json}`, config.fhirMaxResponseBytes)
+            console.log(`[fhir] ${def.resourceType} OK`)
+            emitAudit({
+               ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op,
+               status: shaped.isError ? "truncated" : "ok", durationMs: auditTime(t0), httpStatus: 200,
+               jsonBytes: Buffer.byteLength(json, "utf8"),
+               ...(stats && { bundleEntries: stats.entries, bundleTotal: stats.total, hasNext: !!stats.nextUrl }),
+               ...(search && { countInjected: search.countInjected, countCapped: search.countCapped, countSkipped: search.countSkipped }),
+               ...(cap.warning && { capWarning: true }),
+            })
             return {
                content: [{ type: "text" as const, text: shaped.text }],
                ...(shaped.isError && { isError: true }),
@@ -96,10 +86,8 @@ const
          } catch (err) {
             const message = err instanceof Error ? err.message : String(err)
             console.error(`[fhir] ${def.resourceType} ERR ${message}`)
-            return {
-               content: [{ type: "text" as const, text: message }],
-               isError: true,
-            }
+            emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "error", durationMs: auditTime(t0), httpStatus: errorStatus(err) })
+            return { content: [{ type: "text" as const, text: message }], isError: true }
          }
       }
 

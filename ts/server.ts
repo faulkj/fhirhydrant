@@ -5,6 +5,7 @@ import { basename, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { McpServer, StdioServerTransport } from "@modelcontextprotocol/server"
 import { config } from "./config.ts"
+import { initAuditSinks } from "./audit.ts"
 import { startAuth, stopAuth, restartAuth } from "./fhir/auth.ts"
 import { getDefinitionsPath, reloadDefinitions, getScopes } from "./fhir/definitions.ts"
 import { jwksHandler } from "./fhir/jwks.ts"
@@ -22,6 +23,7 @@ const
       "utf8",
    ).trim(),
 
+   _ = initAuditSinks(config.auditSinks, config.auditFile),
    makeServer = (): McpServer => {
       const s = new McpServer(SERVER_INFO, { instructions: SERVER_INSTRUCTIONS })
       registerAll(s)

@@ -51,6 +51,8 @@ interface Config {
    fhirDefaultCount: number
    fhirMaxCount: number
    fhirMaxResponseBytes: number
+   auditSinks: AuditSinkName[]
+   auditFile: string
 }
 
 /** Getter-backed token response compatible with fhirclient — access_token always reflects the latest issued token. */
@@ -108,6 +110,41 @@ interface CapabilitySummary {
       toolName: string
       reason: string
    }>
+}
+
+/** Allowed audit sink names. */
+type AuditSinkName = "console" | "file"
+
+/** A sink function that receives a structured audit event. */
+type AuditSinkFn = (event: AuditEvent) => void
+
+/** Parsed stats from a FHIR Bundle response — shared between response notes and audit. */
+interface BundleStats {
+   entries: number
+   total: number | undefined
+   jsonBytes: number
+   nextUrl: string | undefined
+}
+
+/** Structured, PHI-free audit event emitted for every FHIR MCP operation. */
+interface AuditEvent {
+   ts: string
+   tool: string
+   resourceType?: string
+   operation: "search" | "read" | "paginate" | "capabilities"
+   status: "ok" | "truncated" | "error" | "blocked"
+   durationMs: number
+   jsonBytes?: number
+   bundleEntries?: number
+   bundleTotal?: number
+   hasNext?: boolean
+   countInjected?: boolean
+   countCapped?: boolean
+   countSkipped?: boolean
+   capWarning?: boolean
+   metadataBlocked?: boolean
+   validationBlocked?: boolean
+   httpStatus?: number
 }
 
 /** Express Request alias for MCP HTTP handler typing. */
