@@ -4,6 +4,7 @@ import { getDefinitions } from "../fhir/definitions.ts"
 import { createFhirClient } from "../fhir/client.ts"
 import { withRetry, enforceByteLimit } from "../utils.ts"
 import { canShapeCount, buildSearchUrl } from "./shaping.ts"
+import { responseNote } from "./response-notes.ts"
 import { filterAndValidateDefinitions, checkRuntimeCapability } from "./validation.ts"
 
 const
@@ -77,13 +78,15 @@ const
                      "ok")
             console.log(`[fhir] ${def.resourceType} OK ${summary}`)
             const
-               warnings = [
+               json = JSON.stringify(result, null, 2),
+               notes = [
                   cap.warning,
                   shape.warn ? `Note: _count was injected but ${def.resourceType} does not advertise it in /metadata.` : undefined,
+                  responseNote(result, json),
                ].filter(Boolean),
-               prefix = warnings.length ? warnings.join("\n") + "\n\n" : "",
+               prefix = notes.length ? notes.join("\n") + "\n\n" : "",
                shaped = enforceByteLimit(
-                  `${prefix}${JSON.stringify(result, null, 2)}`,
+                  `${prefix}${json}`,
                   config.fhirMaxResponseBytes,
                )
             return {

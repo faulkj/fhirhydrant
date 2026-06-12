@@ -7,6 +7,7 @@ import { config } from "../config.ts"
 import { createFhirClient } from "../fhir/client.ts"
 import { fetchMetadata, getCapabilitySummary } from "../fhir/metadata.ts"
 import { withRetry, enforceByteLimit } from "../utils.ts"
+import { responseNote } from "./response-notes.ts"
 
 const
    // Probe cwd first, then bundled package root, then source layout fallback
@@ -79,7 +80,10 @@ export const registerCoreTools = (server: McpServer): void => {
                   :  "ok"
             console.log(`[fhir] paginate OK ${summary}`)
             const
-               shaped = enforceByteLimit(JSON.stringify(result, null, 2), config.fhirMaxResponseBytes)
+               json = JSON.stringify(result, null, 2),
+               note = responseNote(result, json),
+               prefix = note ? note + "\n\n" : "",
+               shaped = enforceByteLimit(`${prefix}${json}`, config.fhirMaxResponseBytes)
             return {
                content: [{ type: "text" as const, text: shaped.text }],
                ...(shaped.isError && { isError: true }),
