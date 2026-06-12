@@ -1,6 +1,6 @@
 {
    "name": "fhirhydrant",
-   "version": "0.2.0",
+   "version": "0.3.0",
    "description": "An MCP server for connecting AI clients to FHIR APIs.",
    "author": "Joshua Faulkenberry <j@joshuafaulkenberry.com> (https://joshuafaulkenberry.com/)",
    "license": "Unlicense",
