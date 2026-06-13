@@ -55,6 +55,19 @@ export const filterAndValidateDefinitions = (defs: ResourceDefinition[]): Resour
    return enabled
 }
 
+const FHIR_DATE = /^(eq|ne|gt|lt|ge|le|sa|eb|ap)?\d{4}(-\d{2}(-\d{2})?)?$/
+const isDateParam = (name: string): boolean => name === "date" || name === "birthdate" || name.endsWith("-date")
+
+/** Validates date-typed search params. Returns an error string for the first malformed value, or undefined if all are valid. */
+export const validateDateArgs = (args: Record<string, unknown>): string | undefined => {
+   for (const [k, v] of Object.entries(args)) {
+      if (!isDateParam(k) || typeof v !== "string" || v === "") continue
+      if (!FHIR_DATE.test(v))
+         return messages.invalidDateParam.replace("{param}", k).replace("{value}", v)
+   }
+   return undefined
+}
+
 /**
  * Runtime capability check — called per-request in tool handlers.
  * Returns an error string to block the request, a warning string to prepend to the response, or neither.

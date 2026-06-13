@@ -31,5 +31,7 @@
    
    "responseAutoRetried": "Note: Response exceeded byte limit at _count={original}. Auto-retried with _count={reduced} to fit within {limit} bytes.",
 
+   "invalidDateParam": "\"{param}\" value \"{value}\" is not a valid FHIR date — expected YYYY, YYYY-MM, or YYYY-MM-DD with optional prefix (eq, ne, gt, lt, ge, le, sa, eb, ap)",
+
    "responseTooLarge": "Response too large ({bytes} bytes, limit {limit}). Retry with a narrower search, lower _count, date/category/status filters, or use paginate."
 }

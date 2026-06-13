@@ -6,7 +6,7 @@ import { withRetry, enforceByteLimit, formatFhirError } from "../utils.ts"
 import { emitAudit, auditTime, errorStatus } from "../audit.ts"
 import { canShapeCount, buildSearchUrl, rebuildWithCount } from "./shaping.ts"
 import { responseNote, bundleStats } from "./response-notes.ts"
-import { checkRuntimeCapability } from "./validation.ts"
+import { checkRuntimeCapability, validateDateArgs } from "./validation.ts"
 
 export const isDirectRead = (args: Record<string, unknown>, supportsDirectRead: boolean): string | undefined => {
    if (!supportsDirectRead) return undefined
@@ -52,6 +52,11 @@ export const makeHandler =
                   .replace("{sets}", def.requireCombination.map((combo) => combo.join(" + ")).join(", or ")),
             }], isError: true }
          }
+      }
+      const dateErr = !directId ? validateDateArgs(args) : undefined
+      if (dateErr) {
+         emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "blocked", durationMs: auditTime(t0), validationBlocked: true })
+         return { content: [{ type: "text" as const, text: dateErr }], isError: true }
       }
       try {
          const
