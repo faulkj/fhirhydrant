@@ -6,6 +6,7 @@ interface ResourceDefinitionRaw {
    supportsDirectRead: boolean
    searchParams?: Record<string, string>
    requireOneOf?: string[]
+   requireCombination?: string[][]
 }
 
 /** Describes a FHIR resource type and how it maps to an MCP tool. */
@@ -15,6 +16,7 @@ interface ResourceDefinition {
    description: string
    supportsDirectRead: boolean
    requireOneOf?: string[]
+   requireCombination?: string[][]
    searchParams: Record<string, string>
    searchSchema: import("zod").ZodObject<import("zod").ZodRawShape>
 }

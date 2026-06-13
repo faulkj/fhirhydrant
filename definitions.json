@@ -3,15 +3,29 @@
       {
          "resourceType": "Patient",
          "toolName": "patient",
-         "description": "Search for or read a FHIR Patient resource. For direct read, provide _id alone. For search, many FHIR servers require one of these minimum data sets: (1) identifier (MRN or FHIR ID), (2) given + family + birthdate, or (3) given + family + legal-sex + telecom. Searching by name alone may not be sufficient.",
+         "description": "Search for or read a FHIR Patient resource. For direct read, provide _id alone. For search, you MUST supply one of these minimum data sets — name alone is never sufficient: (1) identifier (MRN, FHIR ID, or other system|value identifier), (2) given + family + birthdate, or (3) given + family + legal-sex (or gender) + telecom. Always ask the user for enough information to satisfy one of these sets before searching.",
          "supportsDirectRead": true,
          "searchParams": {
             "_id": "Patient resource ID — performs direct read when provided alone",
             "family": "Family (last) name",
             "given": "Given (first) name",
+            "name": "Any part of the patient's name — ignored when family or given is also provided",
             "birthdate": "Date of birth in YYYY-MM-DD format",
-            "identifier": "Business identifier in system|value format"
-         }
+            "gender": "Administrative gender: female, male, other, unknown",
+            "legal-sex": "Legal sex — takes precedence over gender when both are provided: female, male, nonbinary, x, unknown",
+            "telecom": "Phone number or email address (prefix # to skip phone validation, + for international)",
+            "identifier": "Business identifier in system|value format (e.g. MRN, SSN, FHIR ID)",
+            "address": "Street address line",
+            "address-city": "City",
+            "address-state": "State (US states only)",
+            "address-postalcode": "Postal / ZIP code"
+         },
+         "requireCombination": [
+            ["identifier"],
+            ["given", "family", "birthdate"],
+            ["given", "family", "legal-sex", "telecom"],
+            ["given", "family", "gender", "telecom"]
+         ]
       },
       {
          "resourceType": "Observation",

@@ -41,6 +41,15 @@ const
                return { content: [{ type: "text" as const, text: `Search requires at least one of: ${def.requireOneOf.join(", ")}` }], isError: true }
             }
          }
+         if (!directId && def.requireCombination) {
+            const has = (k: string) => { const v = args[k]; return typeof v === "string" && v !== "" }
+            const matched = def.requireCombination.some((combo) => combo.every(has))
+            if (!matched) {
+               const sets = def.requireCombination.map((c) => c.join(" + ")).join(", or ")
+               emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "blocked", durationMs: auditTime(t0), validationBlocked: true })
+               return { content: [{ type: "text" as const, text: `${def.resourceType} search requires one of these parameter sets: ${sets}. Ask the user for the missing values.` }], isError: true }
+            }
+         }
          try {
             const
                shape = directId ? { allowed: false } : canShapeCount(def.resourceType),

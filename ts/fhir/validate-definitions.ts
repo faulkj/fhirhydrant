@@ -96,6 +96,25 @@ export const validateDefinitions = (raw: unknown): ValidationResult => {
                errors.push(`"${name}": requireOneOf key "${key}" is not in searchParams`)
       }
 
+      const
+         rawCombo = entry["requireCombination"],
+         requireCombination =
+            Array.isArray(rawCombo) && rawCombo.length > 0 &&
+            rawCombo.every((c: unknown) => Array.isArray(c) && c.length > 0 && c.every((v: unknown) => typeof v === "string" && v.trim())) ?
+               (rawCombo as string[][])
+            :  undefined
+
+      if (rawCombo !== undefined && !requireCombination)
+         errors.push(`"${name}": requireCombination must be a non-empty array of non-empty string arrays when provided`)
+
+      if (requireCombination) {
+         const paramKeys = new Set(Object.keys(params))
+         for (const combo of requireCombination)
+            for (const key of combo)
+               if (!paramKeys.has(key))
+                  errors.push(`"${name}": requireCombination key "${key}" is not in searchParams`)
+      }
+
       entries.push({
          resourceType: rt,
          toolName: name,
@@ -106,6 +125,7 @@ export const validateDefinitions = (raw: unknown): ValidationResult => {
                (params as Record<string, string>) :
                undefined,
          requireOneOf,
+         requireCombination,
       })
    }
 
