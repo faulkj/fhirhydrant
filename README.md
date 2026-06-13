@@ -170,8 +170,27 @@ fhirHydrant shapes search responses to manage token economy and limit PHI exposu
   touches resources that advertise `_count`; `warn` injects with a warning;
   `off` applies to all searches. Direct reads and pagination are exempt.
 
-- **Byte limit** — `FHIR_MAX_RESPONSE_BYTES` caps every tool response; exceeding
-  it returns an error advising the caller to narrow or paginate.
+- **Byte limit with auto-retry** — `FHIR_MAX_RESPONSE_BYTES` caps every tool
+  response. When a search Bundle exceeds the limit, the server automatically
+  retries with `_count` halved (repeatedly, down to `_count=1`). If even a
+  single entry exceeds the limit, the original "too large" error is returned.
+  Auto-retry applies only to search Bundles — direct reads and pagination are
+  exempt. A note is prepended when a retry succeeds (e.g. `_count` reduced
+  from 20 to 5).
+
+## Customization
+
+Everything in `config/` is yours to edit — no source changes needed:
+
+| File | Purpose |
+|---|---|
+| [`definitions.json`](config/definitions.json) | FHIR resource → MCP tool mappings, search params, and search-control descriptions (see [Definitions](#definitions) below) |
+| [`instructions.md`](config/instructions.md) | System prompt sent to the AI client — controls how the model uses FHIR tools |
+| [`messages.json`](config/messages.json) | Every user-facing message, error, and note the server can return |
+| [`core-tools.json`](config/core-tools.json) | Built-in tool definitions (`paginate`, `capabilities`) — descriptions and param hints |
+
+Changes take effect on restart. In development, `definitions.json` also
+hot-reloads (see [Hot-reload](#hot-reload-dev-mode)).
 
 ## Definitions
 

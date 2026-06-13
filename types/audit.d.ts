@@ -22,6 +22,7 @@ interface AuditEvent {
    countInjected?: boolean
    countCapped?: boolean
    countSkipped?: boolean
+   autoRetryCount?: number
    capWarning?: boolean
    metadataBlocked?: boolean
    validationBlocked?: boolean

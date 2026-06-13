@@ -4,7 +4,7 @@ import { getDefinitions } from "../fhir/definitions.ts"
 import { createFhirClient } from "../fhir/client.ts"
 import { withRetry, enforceByteLimit } from "../utils.ts"
 import { emitAudit, auditTime, errorStatus } from "../audit.ts"
-import { canShapeCount, buildSearchUrl } from "./shaping.ts"
+import { canShapeCount, buildSearchUrl, rebuildWithCount } from "./shaping.ts"
 import { responseNote, bundleStats } from "./response-notes.ts"
 import { checkRuntimeCapability } from "./validation.ts"
 
@@ -56,24 +56,45 @@ export const makeHandler =
          const
             shape = directId ? { allowed: false } : canShapeCount(def.resourceType),
             client = createFhirClient(),
-            search = directId ? undefined : buildSearchUrl(def.resourceType, args, shape.allowed),
-            url = directId ? `${def.resourceType}/${directId}` : search!.url
+            search = directId ? undefined : buildSearchUrl(def.resourceType, args, shape.allowed)
+         let
+            url = directId ? `${def.resourceType}/${directId}` : search!.url,
+            retries = 0,
+            currentCount = 0
 
          config.debug
             ? console.log(`🔥 ${def.resourceType} ${op} → ${url}`)
             : console.log(`🔥 ${def.resourceType} ${op}`)
 
-         const
-            result = await withRetry(`${def.resourceType} ${op}`, () => client.request(url)),
-            json = JSON.stringify(result, null, 2),
-            stats = bundleStats(result, json),
-            notes = [
-               cap.warning,
-               shape.warn ? messages.countNotAdvertised.replace("{resourceType}", def.resourceType) : undefined,
-               responseNote(result, json),
-            ].filter(Boolean),
-            prefix = notes.length ? notes.join("\n") + "\n\n" : "",
+         let result: unknown, json: string, stats: ReturnType<typeof bundleStats>, shaped: ReturnType<typeof enforceByteLimit>
+         // eslint-disable-next-line no-constant-condition
+         while (true) {
+            result = await withRetry(`${def.resourceType} ${op}`, () => client.request(url))
+            json = JSON.stringify(result, null, 2)
+            stats = bundleStats(result, json)
+            const
+               notes = [
+                  cap.warning,
+                  shape.warn ? messages.countNotAdvertised.replace("{resourceType}", def.resourceType) : undefined,
+                  retries > 0
+                     ? messages.responseAutoRetried
+                        .replace("{original}", String(search ? new URLSearchParams(search.url.split("?")[1] ?? "").get("_count") ?? "?" : "?"))
+                        .replace("{reduced}", String(currentCount))
+                        .replace("{limit}", String(config.fhirMaxResponseBytes))
+                     : undefined,
+                  responseNote(result, json),
+               ].filter(Boolean),
+               prefix = notes.length ? notes.join("\n") + "\n\n" : ""
             shaped = enforceByteLimit(`${prefix}${json}`, config.fhirMaxResponseBytes)
+            if (!shaped.isError || !search || !stats) break
+            const next = Math.floor((currentCount || stats.entries || config.fhirDefaultCount) / 2)
+            if (next < 1) break
+            currentCount = next
+            retries++
+            url = rebuildWithCount(search.url, currentCount)
+            console.log(`✂️ ${def.resourceType}: response too large, retrying with _count=${currentCount}`)
+         }
+
          console.log(`🔥 ${def.resourceType} OK`)
          emitAudit({
             ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op,
@@ -81,6 +102,7 @@ export const makeHandler =
             jsonBytes: Buffer.byteLength(json, "utf8"),
             ...(stats && { bundleEntries: stats.entries, bundleTotal: stats.total, hasNext: !!stats.nextUrl }),
             ...(search && { countInjected: search.countInjected, countCapped: search.countCapped, countSkipped: search.countSkipped }),
+            ...(retries > 0 && { autoRetryCount: retries }),
             ...(cap.warning && { capWarning: true }),
          })
          return {

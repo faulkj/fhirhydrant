@@ -53,3 +53,13 @@ export const buildSearchUrl = (
       countSkipped,
    }
 }
+
+/** Replaces _count in an existing search URL (e.g. for byte-limit auto-retry). */
+export const rebuildWithCount = (url: string, count: number): string => {
+   const
+      qIdx = url.indexOf("?"),
+      base = qIdx >= 0 ? url.slice(0, qIdx) : url,
+      params = new URLSearchParams(qIdx >= 0 ? url.slice(qIdx + 1) : "")
+   params.set("_count", String(count))
+   return `${base}?${params.toString()}`
+}
