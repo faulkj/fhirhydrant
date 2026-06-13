@@ -1,5 +1,5 @@
 import fhirpath from "fhirpath"
-import fhirpath_r4_model from "fhirpath/fhir-context/r4"
+import fhirpath_r4_model from "fhirpath/fhir-context/r4/index.js"
 
 export const extractFhirPath = (args: Record<string, unknown>): string | undefined => {
    const raw = args["fhirpath"]
