@@ -68,7 +68,7 @@ The fastest way to get running with a desktop MCP client (Copilot, Claude, Curso
 
 **3. Customize resources** *(optional)*
 
-Drop a `definitions.json` in your working directory to override the default FHIR resource set. See [Definitions](#definitions).
+Edit [config/definitions.json](config/definitions.json) to customize the default FHIR resource set. See [Definitions](#definitions).
 
 **From source:** copy `.env.example` to `.env`, fill in values, run `npm run dev`.
 
@@ -175,17 +175,12 @@ fhirHydrant shapes search responses to manage token economy and limit PHI exposu
 
 ## Definitions
 
-fhirHydrant uses a `definitions.json` file to map FHIR resource types to MCP
-tools. The resolution order is:
-
-1. `./definitions.json` in the current working directory (if it exists)
-2. Packaged default definitions
-
-Edit `definitions.json` directly when customizing resources.
+fhirHydrant uses [config/definitions.json](config/definitions.json) to map FHIR
+resource types to MCP tools. Edit that file directly when customizing resources.
 
 ### Definitions schema
 
-`definitions.json` is an object with two top-level keys:
+[config/definitions.json](config/definitions.json) is an object with two top-level keys:
 
 | Key                    | Type                     | Description                                                                                          |
 | ---------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
@@ -275,7 +270,7 @@ Prefer stdio for local desktop clients, HTTP for remote/networked clients.
 
 ### Resource tools
 
-Defined in [definitions.json](definitions.json). The default set:
+Defined in [config/definitions.json](config/definitions.json). The default set:
 
 | Tool          | Resource    | Direct read |
 | ------------- | ----------- | ----------- |

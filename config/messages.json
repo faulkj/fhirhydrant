@@ -1,0 +1,31 @@
+{
+   "toolNotFound": "Tool \"{toolName}\" is no longer in definitions — restart to apply definition changes",
+   
+   "requireOneOfFailed": "Search requires at least one of: {keys}",
+   
+   "requireCombinationFailed": "{resourceType} search requires one of these parameter sets: {sets}. Ask the user for the missing values.",
+   
+   "countNotAdvertised": "Note: _count was injected but {resourceType} does not advertise it in /metadata.",
+   
+   "resourceNotAdvertised": "{resourceType} is not advertised by this FHIR server's /metadata.",
+   
+   "paramsNotAdvertised": "search parameter {params} not advertised",
+   
+   "includesNotAdvertised": "_include value {values} not in advertised list",
+   
+   "revincludesNotAdvertised": "_revinclude value {values} not in advertised list",
+   
+   "capabilityMismatch": "{resourceType}: {parts} — per /metadata",
+   
+   "capabilityStrict": "{msg}. Remove the unadvertised value or set FHIR_METADATA_MODE=warn.",
+   
+   "capabilityWarn": "Note: {msg} — this call may be vendor-specific.",
+   
+   "paginationOriginMismatch": "Pagination URL origin \"{actual}\" does not match FHIR server origin \"{expected}\"",
+   
+   "paginationRetryHint": "{message}\n\nRetry with the same url to resume from this page.",
+   
+   "capabilitiesUnavailable": "No /metadata available. The server may not support CapabilityStatement, or FHIR_METADATA_MODE is set to off.",
+   
+   "responseTooLarge": "Response too large ({bytes} bytes, limit {limit}). Retry with a narrower search, lower _count, date/category/status filters, or use paginate."
+}

@@ -1,3 +1,5 @@
+import messages from "../config/messages.json" with { type: "json" }
+
 /** Checks whether an error is transient and eligible for retry. */
 export const retryable = (err: unknown): boolean => {
    if (err instanceof Error) {
@@ -34,7 +36,9 @@ export const withRetry = async <T>(label: string, fn: () => Promise<T>, attempts
 export const enforceByteLimit = (text: string, limit: number): { text: string, isError?: true } => {
    const bytes = Buffer.byteLength(text, "utf8")
    return bytes <= limit ? { text } : {
-      text: `Response too large (${bytes} bytes, limit ${limit}). Retry with a narrower search, lower _count, date/category/status filters, or use paginate.`,
+      text: messages.responseTooLarge
+         .replace("{bytes}", bytes.toString())
+         .replace("{limit}", limit.toString()),
       isError: true,
    }
 }

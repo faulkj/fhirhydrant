@@ -1,3 +1,4 @@
+import messages from "../../config/messages.json" with { type: "json" }
 import { config } from "../config.ts"
 import { isMetadataAvailable, getResourceMeta, setSkippedTools } from "../fhir/metadata.ts"
 
@@ -68,7 +69,7 @@ export const checkRuntimeCapability = (
    const meta = getResourceMeta(def.resourceType)
 
    if (!meta)
-      return { error: `${def.resourceType} is not advertised by this FHIR server's /metadata.` }
+      return { error: messages.resourceNotAdvertised.replace("{resourceType}", def.resourceType) }
 
    if (!directId) {
       const unadvertised: string[] = [], badIncludes: string[] = [], badRevIncludes: string[] = []
@@ -88,17 +89,19 @@ export const checkRuntimeCapability = (
 
       const parts: string[] = []
       if (unadvertised.length > 0)
-         parts.push(`search parameter ${unadvertised.map((p) => `"${p}"`).join(", ")} not advertised`)
+         parts.push(messages.paramsNotAdvertised.replace("{params}", unadvertised.map((p) => `"${p}"`).join(", ")))
       if (badIncludes.length > 0)
-         parts.push(`_include value ${badIncludes.map((v) => `"${v}"`).join(", ")} not in advertised list`)
+         parts.push(messages.includesNotAdvertised.replace("{values}", badIncludes.map((v) => `"${v}"`).join(", ")))
       if (badRevIncludes.length > 0)
-         parts.push(`_revinclude value ${badRevIncludes.map((v) => `"${v}"`).join(", ")} not in advertised list`)
+         parts.push(messages.revincludesNotAdvertised.replace("{values}", badRevIncludes.map((v) => `"${v}"`).join(", ")))
 
       if (parts.length > 0) {
-         const msg = `${def.resourceType}: ${parts.join("; ")} — per /metadata`
+         const msg = messages.capabilityMismatch
+            .replace("{resourceType}", def.resourceType)
+            .replace("{parts}", parts.join("; "))
          if (config.metadataMode === "strict")
-            return { error: `${msg}. Remove the unadvertised value or set FHIR_METADATA_MODE=warn.` }
-         return { warning: `Note: ${msg} — this call may be vendor-specific.` }
+            return { error: messages.capabilityStrict.replace("{msg}", msg) }
+         return { warning: messages.capabilityWarn.replace("{msg}", msg) }
       }
    }
 

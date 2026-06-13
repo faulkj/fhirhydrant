@@ -26,8 +26,9 @@ export const withAuditContext = <T>(ctx: AuditContext, fn: () => T): T =>
 
 /** Dispatches a structured audit event to all active sinks, merging request-scoped context. */
 export const emitAudit = (event: AuditEvent): void => {
-   const ctx = auditContext.getStore()
-   const merged = ctx?.user ? { user: ctx.user, ...event } : event
+   const
+      ctx = auditContext.getStore(),
+      merged = ctx?.user ? { user: ctx.user, ...event } : event
    for (const sink of sinks) sink(merged)
 }
 
@@ -37,11 +38,14 @@ export const auditTime = (start: number): number => Date.now() - start
 /** Extracts an HTTP status code from common error shapes, or undefined. */
 export const errorStatus = (err: unknown): number | undefined => {
    if (!err || typeof err !== "object") return undefined
-   const e = err as Record<string, unknown>
-   const s = typeof e.status === "number" ? e.status
-      : typeof e.statusCode === "number" ? e.statusCode
-      : e.response && typeof e.response === "object" && typeof (e.response as Record<string, unknown>).status === "number"
-         ? (e.response as Record<string, unknown>).status as number
-      : undefined
+   const 
+      e = err as Record<string, unknown>,
+      s = typeof e.status === "number" 
+         ? e.status
+         : typeof e.statusCode === "number" 
+            ? e.statusCode
+            : e.response && typeof e.response === "object" && typeof (e.response as Record<string, unknown>).status === "number"
+               ? (e.response as Record<string, unknown>).status as number
+               : undefined
    return s && s >= 100 && s < 600 ? s : undefined
 }

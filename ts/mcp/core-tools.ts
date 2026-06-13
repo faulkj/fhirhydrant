@@ -3,6 +3,7 @@ import { z } from "zod"
 import { existsSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+import messages from "../../config/messages.json" with { type: "json" }
 import { config } from "../config.ts"
 import { createFhirClient } from "../fhir/client.ts"
 import { fetchMetadata, getCapabilitySummary } from "../fhir/metadata.ts"
@@ -11,15 +12,11 @@ import { emitAudit, auditTime, errorStatus } from "../audit.ts"
 import { responseNote, bundleStats } from "./response-notes.ts"
 
 const
-   // Probe cwd first, then bundled package root, then source layout fallback
    coreToolsPath = (): string => {
       const
-         cwd = join(process.cwd(), "core-tools.json"),
-         bundled = join(dirname(fileURLToPath(import.meta.url)), "..", "core-tools.json"),
-         source = join(dirname(fileURLToPath(import.meta.url)), "../..", "core-tools.json")
-      return existsSync(cwd) ? cwd
-         : existsSync(bundled) ? bundled
-         : source
+         bundled = join(dirname(fileURLToPath(import.meta.url)), "..", "config", "core-tools.json"),
+         source = join(dirname(fileURLToPath(import.meta.url)), "../..", "config", "core-tools.json")
+      return existsSync(bundled) ? bundled : source
    },
    loadCoreTools = (): CoreToolDef[] =>
       JSON.parse(readFileSync(coreToolsPath(), "utf8")) as CoreToolDef[],
@@ -29,7 +26,9 @@ const
          serverUrl = new URL(baseHref),
          nextUrl = new URL(url, baseHref)
       if (nextUrl.origin !== serverUrl.origin)
-         throw new Error(`Pagination URL origin "${nextUrl.origin}" does not match FHIR server origin "${serverUrl.origin}"`)
+         throw new Error(messages.paginationOriginMismatch
+            .replace("{actual}", nextUrl.origin)
+            .replace("{expected}", serverUrl.origin))
       return nextUrl.toString()
    }
 
@@ -57,9 +56,9 @@ export const registerCoreTools = (server: McpServer): void => {
                validatedUrl = validatePageUrl(args["url"] as string),
                client = createFhirClient()
 
-            config.debug ?
-               console.log(`🔥 paginate → ${validatedUrl}`)
-            :  console.log("🔥 paginate")
+            config.debug
+               ? console.log(`🔥 paginate → ${validatedUrl}`)
+               : console.log("🔥 paginate")
 
             const
                result = await withRetry("paginate", () => client.request(validatedUrl)),
@@ -84,7 +83,7 @@ export const registerCoreTools = (server: McpServer): void => {
             console.error(`🔥 paginate ERR ${message}`)
             emitAudit({ ts: new Date().toISOString(), tool: "paginate", operation: "paginate", status: "error", durationMs: auditTime(t0), httpStatus: errorStatus(err) })
             return {
-               content: [{ type: "text" as const, text: `${message}\n\nRetry with the same url to resume from this page.` }],
+               content: [{ type: "text" as const, text: messages.paginationRetryHint.replace("{message}", message) }],
                isError: true,
             }
          }
@@ -102,7 +101,7 @@ export const registerCoreTools = (server: McpServer): void => {
             if (!summary) {
                emitAudit({ ts: new Date().toISOString(), tool: "capabilities", operation: "capabilities", status: "ok", durationMs: auditTime(t0) })
                return {
-                  content: [{ type: "text" as const, text: "No /metadata available. The server may not support CapabilityStatement, or FHIR_METADATA_MODE is set to off." }],
+                  content: [{ type: "text" as const, text: messages.capabilitiesUnavailable }],
                }
             }
             emitAudit({ ts: new Date().toISOString(), tool: "capabilities", operation: "capabilities", status: "ok", durationMs: auditTime(t0), ...(args["refresh"] ? { httpStatus: 200 } : {}) })

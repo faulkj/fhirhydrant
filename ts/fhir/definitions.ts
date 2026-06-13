@@ -10,15 +10,17 @@ export const getDefinitions = (): ResourceDefinition[] => snapshot.definitions
 /** Returns the SMART scopes derived from the current definitions snapshot. */
 export const getScopes = (): string[] => snapshot.scopes
 
-/** Returns the user-editable search-control descriptions from definitions.json. */
+/** Returns the user-editable search-control descriptions from config/definitions.json. */
 export const getsearchControls = (): Record<string, string> => snapshot.searchControls
 
-const packaged = join(dirname(fileURLToPath(import.meta.url)), "../..", "definitions.json")
-
-export const getDefinitionsPath = (): string => {
-   const cwd = join(process.cwd(), "definitions.json")
-   return existsSync(cwd) ? cwd : packaged
+const definitionsPath = (): string => {
+   const
+      bundled = join(dirname(fileURLToPath(import.meta.url)), "..", "config", "definitions.json"),
+      source = join(dirname(fileURLToPath(import.meta.url)), "../..", "config", "definitions.json")
+   return existsSync(bundled) ? bundled : source
 }
+
+export const getDefinitionsPath = (): string => definitionsPath()
 
 /** Builds a Zod shape from search params, auto-injecting _id when needed. */
 export const buildShape = (
@@ -43,13 +45,13 @@ const parse = (): Snapshot => {
       raw = JSON.parse(readFileSync(getDefinitionsPath(), "utf8")) as unknown,
       result = validateDefinitions(raw)
    if (result.errors.length > 0)
-      throw new Error(`definitions.json: ${result.errors.join("; ")}`)
+      throw new Error(`config/definitions.json: ${result.errors.join("; ")}`)
 
    const
       seen = new Set<string>(),
       definitions: ResourceDefinition[] = result.entries.map((entry) => {
          if (seen.has(entry.toolName))
-            throw new Error(`definitions.json: duplicate toolName "${entry.toolName}"`)
+            throw new Error(`config/definitions.json: duplicate toolName "${entry.toolName}"`)
          seen.add(entry.toolName)
 
          const params = entry.searchParams ?? {}
@@ -65,9 +67,9 @@ const parse = (): Snapshot => {
          }
       }),
       scopes = definitions.map((d) =>
-         d.supportsDirectRead ?
-            `system/${d.resourceType}.rs`
-         :  `system/${d.resourceType}.s`,
+         d.supportsDirectRead
+            ? `system/${d.resourceType}.rs`
+            : `system/${d.resourceType}.s`,
       )
    return { definitions, scopes, searchControls: result.searchControls }
 }
@@ -75,7 +77,7 @@ const parse = (): Snapshot => {
 let snapshot = parse()
 
 /**
- * Re-reads definitions.json and rebuilds the snapshot.
+ * Re-reads config/definitions.json and rebuilds the snapshot.
  * Returns true on success. On failure, logs the error and retains the last valid snapshot.
  */
 export const reloadDefinitions = (): boolean => {

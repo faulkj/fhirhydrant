@@ -9,25 +9,22 @@ for (const level of ["log", "info", "warn", "error"] as const) {
 import { readFileSync, watch } from "node:fs"
 import { basename, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
-import { McpServer, StdioServerTransport } from "@modelcontextprotocol/server"
+import { McpServer } from "@modelcontextprotocol/server"
 import { config } from "./config.ts"
-import { initAuditSinks, withAuditContext } from "./audit.ts"
+import { initAuditSinks } from "./audit.ts"
 import { startAuth, stopAuth, restartAuth } from "./fhir/auth.ts"
 import { getDefinitionsPath, reloadDefinitions, getScopes } from "./fhir/definitions.ts"
-import { jwksHandler } from "./fhir/jwks.ts"
 import { fetchMetadata } from "./fhir/metadata.ts"
 import { registerAll } from "./mcp/resources.ts"
 import { registerCoreTools } from "./mcp/core-tools.ts"
+import { startHttp, startStdio } from "./transport.ts"
 
 const
    { version: pkgVersion } = JSON.parse(
       readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "package.json"), "utf8"),
    ) as { version: string },
    SERVER_INFO = { name: "fhirhydrant", version: pkgVersion },
-   SERVER_INSTRUCTIONS = readFileSync(
-      join(dirname(fileURLToPath(import.meta.url)), "..", "instructions.md"),
-      "utf8",
-   ).trim(),
+   SERVER_INSTRUCTIONS = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "config", "instructions.md"), "utf8").trim(),
 
    _ = (initAuditSinks(config.auditSinks, config.auditFile), config.auditUserHeader && console.info(`📝 User header: ${config.auditUserHeader}`)),
    makeServer = (): McpServer => {
@@ -80,94 +77,7 @@ const
             }
          }, 300)
       })
-      console.info(`📋 Watching ${watchFile} for changes`)
-   },
-
-   startHttp = async (): Promise<{
-      attach: (s: McpServer) => Promise<void>
-      close: () => Promise<void>
-   }> => {
-      const
-         { createMcpExpressApp } =
-            await import("@modelcontextprotocol/express"),
-         { NodeStreamableHTTPServerTransport } =
-            await import("@modelcontextprotocol/node"),
-         app = createMcpExpressApp(
-            config.allowedHosts ?
-               { allowedHosts: config.allowedHosts }
-            :  undefined,
-         ),
-         transport = new NodeStreamableHTTPServerTransport({
-            sessionIdGenerator: undefined,
-         })
-
-      let mcpReady = false
-
-      app.get("/health", (_req: Req, res: Res) => res.json({ status: "ok" }))
-
-      if (!config.fhirJwksUrl) {
-         app.get("/jwks", jwksHandler)
-         console.info("🔑 Serving JWKS at /jwks")
-      } else
-         console.info("🔑 External JWKS URL configured — /jwks disabled")
-
-      app.all("/mcp", async (req: Req, res: Res) => {
-         if (!mcpReady)
-            return void res.status(503).json({ status: "starting" })
-         const
-            body = req.body as Record<string, unknown> | undefined,
-            method = body?.method ?? req.method
-         method && console.log(`🔌 ${method}`)
-         const user = config.auditUserHeader ? req.get(config.auditUserHeader)?.trim() || undefined : undefined
-         await withAuditContext(user ? { user } : {}, () => transport.handleRequest(req, res, req.body))
-      })
-
-      app.use((err: Error, _req: Req, res: Res, _next: Next) => {
-         console.error("🌐 Request error:", err.message)
-         res.status(400).json({
-            jsonrpc: "2.0",
-            error: { code: -32700, message: "Parse error" },
-            id: null,
-         })
-      })
-
-      const httpServer = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
-         const s = app.listen(config.port, config.bindHost, () => {
-            console.info(`\x1b[34m🔥 fhirhydrant listening on ${config.bindHost}:${config.port}\x1b[0m`)
-            resolve(s)
-         })
-      })
-
-      return {
-         attach: async (s: McpServer) => {
-            await s.connect(transport)
-            mcpReady = true
-         },
-         close: () =>
-            new Promise<void>((resolve) => {
-               void transport.close()
-               httpServer.close(() => resolve())
-               setTimeout(() => resolve(), 5000)
-            }),
-      }
-   },
-
-   startStdio = async (): Promise<{
-      attach: (s: McpServer) => Promise<void>
-      close: () => Promise<void>
-   }> => {
-      console.log = (...args: unknown[]) => console.error(...args)
-      console.info = (...args: unknown[]) => console.error(...args)
-      const transport = new StdioServerTransport()
-      return {
-         attach: async (s: McpServer) => {
-            await s.connect(transport)
-            console.info("\x1b[34m🚒 fhirhydrant running in stdio mode\x1b[0m")
-         },
-         close: async () => {
-            await transport.close()
-         },
-      }
+      console.info(`👀 Watching ${watchFile} for changes`)
    }
 
 const selfHostJwks = config.transport === "http" && !config.fhirJwksUrl
