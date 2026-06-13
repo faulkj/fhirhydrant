@@ -2,7 +2,7 @@ import messages from "../../config/messages.json" with { type: "json" }
 import { config } from "../config.ts"
 import { getDefinitions } from "../fhir/definitions.ts"
 import { createFhirClient } from "../fhir/client.ts"
-import { withRetry, enforceByteLimit } from "../utils.ts"
+import { withRetry, enforceByteLimit, formatFhirError } from "../utils.ts"
 import { emitAudit, auditTime, errorStatus } from "../audit.ts"
 import { canShapeCount, buildSearchUrl, rebuildWithCount } from "./shaping.ts"
 import { responseNote, bundleStats } from "./response-notes.ts"
@@ -110,9 +110,9 @@ export const makeHandler =
             ...(shaped.isError && { isError: true }),
          }
       } catch (err) {
-         const message = err instanceof Error ? err.message : String(err)
-         console.error(`🔥 ${def.resourceType} ERR ${message}`)
+         const { log, client } = formatFhirError(err)
+         console.error(`🔥 ${def.resourceType} ERR ${log}`)
          emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "error", durationMs: auditTime(t0), httpStatus: errorStatus(err) })
-         return { content: [{ type: "text" as const, text: message }], isError: true }
+         return { content: [{ type: "text" as const, text: client }], isError: true }
       }
    }

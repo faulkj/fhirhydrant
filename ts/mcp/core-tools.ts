@@ -7,7 +7,7 @@ import messages from "../../config/messages.json" with { type: "json" }
 import { config } from "../config.ts"
 import { createFhirClient } from "../fhir/client.ts"
 import { fetchMetadata, getCapabilitySummary } from "../fhir/metadata.ts"
-import { withRetry, enforceByteLimit } from "../utils.ts"
+import { withRetry, enforceByteLimit, formatFhirError } from "../utils.ts"
 import { emitAudit, auditTime, errorStatus } from "../audit.ts"
 import { responseNote, bundleStats } from "./response-notes.ts"
 
@@ -79,11 +79,11 @@ export const registerCoreTools = (server: McpServer): void => {
                ...(shaped.isError && { isError: true }),
             }
          } catch (err) {
-            const message = err instanceof Error ? err.message : String(err)
-            console.error(`🔥 paginate ERR ${message}`)
+            const { log, client } = formatFhirError(err)
+            console.error(`🔥 paginate ERR ${log}`)
             emitAudit({ ts: new Date().toISOString(), tool: "paginate", operation: "paginate", status: "error", durationMs: auditTime(t0), httpStatus: errorStatus(err) })
             return {
-               content: [{ type: "text" as const, text: messages.paginationRetryHint.replace("{message}", message) }],
+               content: [{ type: "text" as const, text: messages.paginationRetryHint.replace("{message}", client) }],
                isError: true,
             }
          }
@@ -109,11 +109,11 @@ export const registerCoreTools = (server: McpServer): void => {
                content: [{ type: "text" as const, text: JSON.stringify(summary, null, 2) }],
             }
          } catch (err) {
-            const message = err instanceof Error ? err.message : String(err)
-            console.error(`🏥 capabilities ERR ${message}`)
+            const { log, client } = formatFhirError(err)
+            console.error(`🏥 capabilities ERR ${log}`)
             emitAudit({ ts: new Date().toISOString(), tool: "capabilities", operation: "capabilities", status: "error", durationMs: auditTime(t0), httpStatus: errorStatus(err) })
             return {
-               content: [{ type: "text" as const, text: message }],
+               content: [{ type: "text" as const, text: client }],
                isError: true,
             }
          }
