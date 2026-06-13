@@ -1,6 +1,6 @@
 import messages from "../../config/messages.json" with { type: "json" }
 import { config } from "../config.ts"
-import { getDefinitions } from "../fhir/definitions.ts"
+import { getDefinitions, getsearchControls } from "../fhir/definitions.ts"
 import { createFhirClient } from "../fhir/client.ts"
 import { withRetry, enforceByteLimit, formatFhirError } from "../utils.ts"
 import { emitAudit, auditTime, errorStatus } from "../audit.ts"
@@ -12,7 +12,8 @@ export const isDirectRead = (args: Record<string, unknown>, supportsDirectRead: 
    if (!supportsDirectRead) return undefined
    const id = typeof args["_id"] === "string" && args["_id"] ? args["_id"] : undefined
    if (!id) return undefined
-   return Object.entries(args).some(([k, v]) => k !== "_id" && v !== undefined && v !== "") ? undefined : id
+   const ignore = new Set(["_id", ...Object.keys(getsearchControls())])
+   return Object.entries(args).some(([k, v]) => !ignore.has(k) && v !== undefined && v !== "") ? undefined : id
 }
 
 export const makeHandler =

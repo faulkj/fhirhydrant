@@ -36,6 +36,11 @@ const
          ?.split(",")
          .map((s) => s.trim())
          .filter(Boolean) || undefined,
+   parsePaginationPaths = (): string[] =>
+      opt("FHIR_PAGINATION_PATHS")
+         ?.split(",")
+         .map((s) => s.trim().replace(/^\/?/, "/").replace(/\/*$/, "/"))
+         .filter((p) => p.length > 1) ?? [],
    parsePositiveInt = (key: string, fallback: number): number => {
       const
          raw = opt(key),
@@ -105,6 +110,7 @@ export const config: Config = {
    auditSinks: parseAuditSinks(),
    auditFile: opt("FHIR_AUDIT_FILE") ?? "./audit.jsonl",
    auditUserHeader: opt("FHIR_AUDIT_USER_HEADER")?.trim() || undefined,
+   paginationPaths: parsePaginationPaths(),
 }
 
 if (!config.fhirKeys.some((k) => k.kid === config.fhirActiveKey))

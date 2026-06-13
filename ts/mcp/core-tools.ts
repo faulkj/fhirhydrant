@@ -29,6 +29,12 @@ const
          throw new Error(messages.paginationOriginMismatch
             .replace("{actual}", nextUrl.origin)
             .replace("{expected}", serverUrl.origin))
+      const
+         basePath = serverUrl.pathname.replace(/\/*$/, "/"),
+         prefixes = [...(basePath.length > 1 ? [basePath] : []), ...config.paginationPaths]
+      if (prefixes.length && !prefixes.some((p) => nextUrl.pathname === p.slice(0, -1) || nextUrl.pathname.startsWith(p)))
+         throw new Error(messages.paginationPathMismatch
+            .replace("{actual}", nextUrl.pathname))
       return nextUrl.toString()
    }
 

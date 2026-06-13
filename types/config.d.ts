@@ -27,4 +27,5 @@ interface Config {
    auditSinks: AuditSinkName[]
    auditFile: string
    auditUserHeader: string | undefined
+   paginationPaths: string[]
 }

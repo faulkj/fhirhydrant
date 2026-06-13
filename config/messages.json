@@ -22,6 +22,8 @@
    "capabilityWarn": "Note: {msg} — this call may be vendor-specific.",
    
    "paginationOriginMismatch": "Pagination URL origin \"{actual}\" does not match FHIR server origin \"{expected}\"",
+
+   "paginationPathMismatch": "Pagination URL path \"{actual}\" does not match any allowed FHIR base path",
    
    "paginationRetryHint": "{message}\n\nRetry with the same url to resume from this page.",
    

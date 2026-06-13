@@ -55,7 +55,10 @@ export const startHttp = async (): Promise<TransportHandle> => {
 
    const httpServer = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
       const s = app.listen(config.port, config.bindHost, () => {
-         console.info(`\x1b[34m🔥 fhirhydrant listening on ${config.bindHost}:${config.port}\x1b[0m`)
+         const displayHost = config.bindHost === "0.0.0.0" || config.bindHost === "127.0.0.1" 
+            ? "localhost" 
+            : config.bindHost
+         console.info(`\x1b[34m🔥 fhirhydrant listening on http://${displayHost}:${config.port}\x1b[0m`)
          resolve(s)
       })
    })
