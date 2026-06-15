@@ -1,4 +1,23 @@
+import { config } from "../../config.ts"
 import { compactNode } from "./compact-model.ts"
+
+/**
+ * Resolves the effective response mode from the explicit per-request value and global config.
+ * @param explicit  Value from extractResponseMode (undefined = absent, null = invalid).
+ * @param directId  When truthy, the request is a direct read (defaults to "full" when global mode is unset).
+ */
+export const resolveResponseMode = (
+   explicit: ResponseMode | null | undefined, directId?: string,
+): { effectiveMode: ResponseMode; wasDefaulted: boolean } | null => {
+   if (explicit === null) return null
+   const
+      locked = config.responseMode === "compact-locked",
+      effectiveMode: ResponseMode = locked
+         ? "compact"
+         : explicit ?? (config.responseMode === "full" ? "full" : config.responseMode === "compact" ? "compact" : directId ? "full" : "compact"),
+      wasDefaulted = !locked && explicit === undefined
+   return { effectiveMode, wasDefaulted }
+}
 
 /** Extracts and removes responseMode from tool args; returns undefined (absent), null (invalid), or the mode string. */
 export const extractResponseMode = (args: Record<string, unknown>): ResponseMode | null | undefined => {

@@ -31,7 +31,7 @@ export const startHttp = async (): Promise<TransportHandle> => {
 
    if (!config.fhirJwksUrl) {
       app.get("/jwks", jwksHandler)
-      console.info("🔑 Serving JWKS at /jwks")
+      console.info(`\x1b[35m🔑 Serving JWKS at http://${config.bindHost === "0.0.0.0" ? "localhost" : config.bindHost}:${config.port}/jwks\x1b[0m`)
    } else
       console.info("🔑 External JWKS URL configured — /jwks disabled")
 
@@ -40,8 +40,9 @@ export const startHttp = async (): Promise<TransportHandle> => {
          return void res.status(503).json({ status: "starting" })
       const
          body = req.body as Record<string, unknown> | undefined,
-         method = body?.method ?? req.method
-      method && console.log(`🔌 ${method}`)
+         method = body?.method as string | undefined,
+         toolName = method === "tools/call" ? (body?.params as Record<string, unknown>)?.name as string | undefined : undefined
+      method && console.log(toolName ? `🔨 ${toolName.charAt(0).toUpperCase()}${toolName.slice(1)}` : `🔌 ${method}`)
       const user = config.auditUserHeader ? req.get(config.auditUserHeader)?.trim() || undefined : undefined
       await withAuditContext(user ? { user } : {}, () => transport.handleRequest(req, res, req.body))
    })

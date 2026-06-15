@@ -21,6 +21,13 @@ interface ResourceDefinition {
    searchSchema: import("zod").ZodObject<import("zod").ZodRawShape>
 }
 
+/** Parsed definitions snapshot built from config/resources.json and config/search-controls.json. */
+interface DefinitionsSnapshot {
+   definitions: ResourceDefinition[]
+   scopes: string[]
+   searchControls: Record<string, string>
+}
+
 /** Return shape of validateResources. */
 interface ValidationResult {
    entries: ResourceDefinitionRaw[]

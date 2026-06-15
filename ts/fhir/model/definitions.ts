@@ -39,9 +39,7 @@ export const buildShape = (
    return shape
 }
 
-type Snapshot = { definitions: ResourceDefinition[]; scopes: string[]; searchControls: Record<string, string> }
-
-const parse = (): Snapshot => {
+const parse = (): DefinitionsSnapshot => {
    const
       dir = getConfigDir(),
       rawResources = JSON.parse(readFileSync(join(dir, "resources.json"), "utf8")) as unknown,

@@ -19,3 +19,8 @@ interface BundleStats {
    jsonBytes: number
    nextUrl: string | undefined
 }
+
+/** Result of resource request validation — either success (directId + op) or an early-exit MCP error response. */
+type GuardResult =
+   | { ok: true; directId: string | undefined; op: AuditEvent["operation"] }
+   | { ok: false; response: { content: { type: "text"; text: string }[]; isError: true } }
