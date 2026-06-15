@@ -144,6 +144,8 @@ Set `FHIR_AUDIT_SINK` to enable one or both sinks:
 
 Each event includes timestamp, tool name, operation type, status, duration,
 response size, and pagination metadata — but never FHIR resource content.
+HTTP requests are assigned a `requestId` (UUID) that propagates into every
+audit event for that request, enabling end-to-end correlation.
 
 #### Audit user identity
 
