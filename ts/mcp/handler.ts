@@ -105,7 +105,7 @@ export const makeHandler =
                json = JSON.stringify(fp.nodes, null, 2)
             }
 
-            if (effectiveMode === "compact" && !filtered) {
+            if (effectiveMode === "compact") {
                json = JSON.stringify(compact(JSON.parse(json)))
                compacted = true
             }

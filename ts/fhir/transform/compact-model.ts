@@ -101,8 +101,20 @@ const
    quantitySimplifier = (v: Record<string, unknown>) => pick(v, ["value", "unit"]),
 
    simplify = (type: string | undefined, value: Record<string, unknown>): unknown => {
-      if (!type) return undefined
+      if (!type) return inferByShape(value)
       if (SIMPLIFIERS[type]) return SIMPLIFIERS[type](value)
       if (isType(type, "Quantity")) return quantitySimplifier(value)
+      return undefined
+   },
+
+   inferByShape = (v: Record<string, unknown>): unknown => {
+      if (Array.isArray(v.coding) || (typeof v.text === "string" && v.coding === undefined && v.system === undefined))
+         return SIMPLIFIERS.CodeableConcept(v)
+      if (typeof v.value === "number" && typeof v.unit === "string")
+         return quantitySimplifier(v)
+      if (typeof v.system === "string" && (typeof v.code === "string" || typeof v.display === "string"))
+         return simplifyCoding(v)
+      if (typeof v.reference === "string")
+         return SIMPLIFIERS.Reference(v)
       return undefined
    }

@@ -11,6 +11,8 @@ export const extractResponseMode = (args: Record<string, unknown>): ResponseMode
 /** Compacts a FHIR resource or Bundle, stripping noise and simplifying well-known datatypes. */
 export const compact = (data: unknown): unknown => {
    if (!data || typeof data !== "object") return data
+   if (Array.isArray(data))
+      return data.map((item) => compact(item)).filter((v) => v !== undefined)
    const r = data as Record<string, unknown>
    if (r.resourceType === "Bundle") {
       const
@@ -33,5 +35,5 @@ export const compact = (data: unknown): unknown => {
    }
    if (typeof r.resourceType === "string")
       return compactNode(data, r.resourceType as string, true) ?? data
-   return data
+   return compactNode(data, "", false) ?? data
 }

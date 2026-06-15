@@ -10,14 +10,14 @@ export const initAuditSinks = (names: AuditSinkName[], filePath: string): void =
    sinks = []
    for (const name of names) {
       if (name === "console")
-         sinks.push((e) => console.log(`� ${JSON.stringify(e)}`))
+         sinks.push((e) => console.log(`👂 ${JSON.stringify(e)}`))
       else if (name === "file")
          sinks.push((e) =>
             void appendFile(filePath, JSON.stringify(e) + "\n", "utf8")
-               .catch((err) => console.error(`� File write failed: ${err instanceof Error ? err.message : err}`)),
+               .catch((err) => console.error(`👂 File write failed: ${err instanceof Error ? err.message : err}`)),
          )
    }
-   sinks.length && console.info(`� Active sinks: ${names.join(", ")}`)
+   sinks.length && console.info(`👂 Active sinks: ${names.join(", ")}`)
 }
 
 /** Runs `fn` within an audit context so emitAudit can merge request-scoped fields automatically. */
