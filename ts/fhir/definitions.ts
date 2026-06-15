@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import * as z from "zod"
-import { validateDefinitions } from "./validate-definitions.ts"
+import { validateResources } from "./validate-definitions.ts"
 
 /** Returns the current valid set of generated FHIR resource definitions. */
 export const getDefinitions = (): ResourceDefinition[] => snapshot.definitions
@@ -10,17 +10,17 @@ export const getDefinitions = (): ResourceDefinition[] => snapshot.definitions
 /** Returns the SMART scopes derived from the current definitions snapshot. */
 export const getScopes = (): string[] => snapshot.scopes
 
-/** Returns the user-editable search-control descriptions from config/definitions.json. */
-export const getsearchControls = (): Record<string, string> => snapshot.searchControls
+/** Returns the user-editable search-control descriptions from config/search-controls.json. */
+export const getSearchControls = (): Record<string, string> => snapshot.searchControls
 
-const definitionsPath = (): string => {
+const configDir = (): string => {
    const
-      bundled = join(dirname(fileURLToPath(import.meta.url)), "..", "config", "definitions.json"),
-      source = join(dirname(fileURLToPath(import.meta.url)), "../..", "config", "definitions.json")
-   return existsSync(bundled) ? bundled : source
+      bundled = join(dirname(fileURLToPath(import.meta.url)), "..", "config"),
+      source = join(dirname(fileURLToPath(import.meta.url)), "../..", "config")
+   return existsSync(join(bundled, "resources.json")) ? bundled : source
 }
 
-export const getDefinitionsPath = (): string => definitionsPath()
+export const getConfigDir = (): string => configDir()
 
 /** Builds a Zod shape from search params, auto-injecting _id when needed. */
 export const buildShape = (
@@ -42,16 +42,27 @@ type Snapshot = { definitions: ResourceDefinition[]; scopes: string[]; searchCon
 
 const parse = (): Snapshot => {
    const
-      raw = JSON.parse(readFileSync(getDefinitionsPath(), "utf8")) as unknown,
-      result = validateDefinitions(raw)
+      dir = getConfigDir(),
+      rawResources = JSON.parse(readFileSync(join(dir, "resources.json"), "utf8")) as unknown,
+      rawControls = JSON.parse(readFileSync(join(dir, "search-controls.json"), "utf8")) as unknown,
+      result = validateResources(rawResources)
    if (result.errors.length > 0)
-      throw new Error(`config/definitions.json: ${result.errors.join("; ")}`)
+      throw new Error(`config/resources.json: ${result.errors.join("; ")}`)
+
+   if (!rawControls || typeof rawControls !== "object" || Array.isArray(rawControls))
+      throw new Error("config/search-controls.json must be a plain object")
+   const searchControls: Record<string, string> = {}
+   for (const [key, val] of Object.entries(rawControls as Record<string, unknown>))
+      if (typeof val === "string" && val.trim())
+         searchControls[key] = val.trim()
+      else
+         throw new Error(`config/search-controls.json: "${key}" must be a non-empty string`)
 
    const
       seen = new Set<string>(),
       definitions: ResourceDefinition[] = result.entries.map((entry) => {
          if (seen.has(entry.toolName))
-            throw new Error(`config/definitions.json: duplicate toolName "${entry.toolName}"`)
+            throw new Error(`config/resources.json: duplicate toolName "${entry.toolName}"`)
          seen.add(entry.toolName)
 
          const params = entry.searchParams ?? {}
@@ -71,13 +82,13 @@ const parse = (): Snapshot => {
             ? `system/${d.resourceType}.rs`
             : `system/${d.resourceType}.s`,
       )
-   return { definitions, scopes, searchControls: result.searchControls }
+   return { definitions, scopes, searchControls }
 }
 
 let snapshot = parse()
 
 /**
- * Re-reads config/definitions.json and rebuilds the snapshot.
+ * Re-reads config files and rebuilds the snapshot.
  * Returns true on success. On failure, logs the error and retains the last valid snapshot.
  */
 export const reloadDefinitions = (): boolean => {

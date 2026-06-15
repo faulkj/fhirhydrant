@@ -1,0 +1,10 @@
+{
+   "_count": "Maximum number of results per page — controls response size and token usage",
+   "_sort": "Sort order for results (e.g. -date for newest first, birthdate for oldest first)",
+   "_summary": "Return summarized resources: true (metadata only), text (text + id + meta), count (count only), data (remove text)",
+   "_elements": "Comma-separated list of element names to include in each resource (e.g. name,birthDate)",
+   "_include": "Include referenced resources in the response Bundle (e.g. Observation:patient)",
+   "_revinclude": "Include resources that reference the matched resources (e.g. Provenance:target)",
+   "fhirpath": "FHIRPath expression evaluated locally against the FHIR response — use for client-side projection when _elements or _summary are unavailable or insufficient",
+   "responseMode": "Response shape: compact (token-efficient) or full (raw FHIR JSON)"
+}

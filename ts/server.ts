@@ -7,13 +7,13 @@ for (const level of ["log", "info", "warn", "error"] as const) {
 }
 
 import { readFileSync, watch } from "node:fs"
-import { basename, dirname, join } from "node:path"
+import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { McpServer } from "@modelcontextprotocol/server"
 import { config } from "./config.ts"
 import { initAuditSinks } from "./audit.ts"
 import { startAuth, stopAuth, restartAuth } from "./fhir/auth.ts"
-import { getDefinitionsPath, reloadDefinitions, getScopes } from "./fhir/definitions.ts"
+import { getConfigDir, reloadDefinitions, getScopes } from "./fhir/definitions.ts"
 import { fetchMetadata } from "./fhir/metadata.ts"
 import { registerAll } from "./mcp/resources.ts"
 import { registerCoreTools } from "./mcp/core-tools.ts"
@@ -37,22 +37,20 @@ const
 let restartingAuth = false
 
 const
+   watchFiles = new Set(["resources.json", "search-controls.json"]),
    startDefinitionsWatcher = (): void => {
-      const
-         defPath = getDefinitionsPath(),
-         watchDir = dirname(defPath),
-         watchFile = basename(defPath)
+      const watchDir = getConfigDir()
 
       let debounce: ReturnType<typeof setTimeout> | undefined
       watch(watchDir, (_eventType, filename) => {
-         if (filename !== watchFile) return
+         if (!filename || !watchFiles.has(filename)) return
          clearTimeout(debounce)
          debounce = setTimeout(async () => {
             const
                prevScopes = getScopes().join(","),
                ok = reloadDefinitions()
             if (!ok) return
-            console.log(`📋 Reloaded from ${watchFile}`)
+            console.log(`📋 Reloaded from ${filename}`)
             console.log("📋 Metadata cache may be stale — restart to re-validate against /metadata")
             if (getScopes().join(",") !== prevScopes) {
                if (restartingAuth)
@@ -77,7 +75,7 @@ const
             }
          }, 300)
       })
-      console.info(`👀 Watching ${watchFile} for changes`)
+      console.info(`👀 Watching config/ for changes`)
    }
 
 const selfHostJwks = config.transport === "http" && !config.fhirJwksUrl

@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/server"
 import * as z from "zod"
 import { config } from "../config.ts"
-import { getDefinitions, getsearchControls, buildShape } from "../fhir/definitions.ts"
+import { getDefinitions, getSearchControls, buildShape } from "../fhir/definitions.ts"
 import { getResourceMeta } from "../fhir/metadata.ts"
 import { filterAndValidateDefinitions } from "./validation.ts"
 import { makeHandler } from "./handler.ts"
@@ -34,7 +34,7 @@ const augmentSchema = (
 
 /** Registers an MCP tool for every ResourceDefinition in the current snapshot. */
 export const registerAll = (server: McpServer): void => {
-   const controlParams = getsearchControls()
+   const controlParams = getSearchControls()
    for (const def of filterAndValidateDefinitions(getDefinitions())) {
       const
          meta = getResourceMeta(def.resourceType),

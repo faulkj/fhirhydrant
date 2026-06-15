@@ -66,11 +66,14 @@ export const registerCoreTools = (server: McpServer): void => {
             fhirpathExpr = extractFhirPath(args),
             explicit = extractResponseMode(args),
             locked = config.responseMode === "compact-locked",
+            t0 = Date.now()
+         if (explicit === null)
+            return { content: [{ type: "text" as const, text: "Invalid responseMode — must be \"compact\" or \"full\"" }], isError: true }
+         const
             effectiveMode: ResponseMode = locked
                ? "compact"
                : explicit ?? (config.responseMode === "full" ? "full" : "compact"),
-            wasDefaulted = !locked && explicit === undefined,
-            t0 = Date.now()
+            wasDefaulted = !locked && explicit === undefined
          try {
             const
                validatedUrl = validatePageUrl(args["url"] as string),

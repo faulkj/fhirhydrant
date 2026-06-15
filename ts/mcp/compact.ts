@@ -1,9 +1,10 @@
 import { compactNode } from "./compact-model.ts"
 
-export const extractResponseMode = (args: Record<string, unknown>): ResponseMode | undefined => {
+export const extractResponseMode = (args: Record<string, unknown>): ResponseMode | null | undefined => {
    const raw = args["responseMode"]
    delete args["responseMode"]
-   return raw === "compact" || raw === "full" ? raw : undefined
+   if (raw === undefined || raw === null || raw === "") return undefined
+   return raw === "compact" || raw === "full" ? raw : null
 }
 
 export const compact = (data: unknown): unknown => {

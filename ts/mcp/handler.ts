@@ -1,6 +1,6 @@
 import messages from "../../config/messages.json" with { type: "json" }
 import { config } from "../config.ts"
-import { getDefinitions, getsearchControls } from "../fhir/definitions.ts"
+import { getDefinitions, getSearchControls } from "../fhir/definitions.ts"
 import { createFhirClient } from "../fhir/client.ts"
 import { withRetry, enforceByteLimit, formatFhirError } from "../fhir/utils.ts"
 import { emitAudit, auditTime, errorStatus } from "../audit.ts"
@@ -14,7 +14,7 @@ export const isDirectRead = (args: Record<string, unknown>, supportsDirectRead: 
    if (!supportsDirectRead) return undefined
    const id = typeof args["_id"] === "string" && args["_id"] ? args["_id"] : undefined
    if (!id) return undefined
-   const ignore = new Set(["_id", ...Object.keys(getsearchControls())])
+   const ignore = new Set(["_id", ...Object.keys(getSearchControls())])
    return Object.entries(args).some(([k, v]) => !ignore.has(k) && v !== undefined && v !== "") ? undefined : id
 }
 
@@ -33,11 +33,14 @@ export const makeHandler =
          op: AuditEvent["operation"] = directId ? "read" : "search",
          cap = checkRuntimeCapability(def, args, directId),
          locked = config.responseMode === "compact-locked",
+         t0 = Date.now()
+      if (explicit === null)
+         return { content: [{ type: "text" as const, text: "Invalid responseMode — must be \"compact\" or \"full\"" }], isError: true }
+      const
          effectiveMode: ResponseMode = locked
             ? "compact"
             : explicit ?? (config.responseMode === "full" ? "full" : config.responseMode === "compact" ? "compact" : directId ? "full" : "compact"),
-         wasDefaulted = !locked && explicit === undefined,
-         t0 = Date.now()
+         wasDefaulted = !locked && explicit === undefined
       if (cap.error) {
          emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "blocked", durationMs: auditTime(t0), metadataBlocked: true })
          return { content: [{ type: "text" as const, text: cap.error }], isError: true }

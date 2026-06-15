@@ -1,12 +1,12 @@
 const text = (value: unknown): string | undefined =>
    typeof value === "string" && value.trim() ? value.trim() : undefined
 
-/** Validates a single resource entry from config/definitions.json. Returns the entry or pushes errors. */
+/** Validates a single resource entry from config/resources.json. Returns the entry or pushes errors. */
 export const validateEntry = (
    value: unknown, seen: Set<string>, errors: string[],
 ): ResourceDefinitionRaw | undefined => {
    if (!value || typeof value !== "object" || Array.isArray(value)) {
-      errors.push("config/definitions.json entries must be objects")
+      errors.push("entries must be objects")
       return undefined
    }
 

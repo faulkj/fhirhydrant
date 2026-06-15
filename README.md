@@ -68,7 +68,7 @@ The fastest way to get running with a desktop MCP client (Copilot, Claude, Curso
 
 **3. Customize resources** *(optional)*
 
-Edit [config/definitions.json](config/definitions.json) to customize the default FHIR resource set. See [Definitions](#definitions).
+Edit [config/resources.json](config/resources.json) to customize the default FHIR resource set. See [Definitions](#definitions).
 
 **From source:** copy `.env.example` to `.env`, fill in values, run `npm run dev`.
 
@@ -193,9 +193,12 @@ fhirHydrant shapes search responses to manage token economy and limit PHI exposu
 
 - **Compact response mode** — The `responseMode` parameter (available on all
   resource tools and `paginate`) controls whether responses use a compact
-  token-efficient format or raw FHIR JSON. Compact mode strips FHIR noise
-  (meta, extensions, narrative, contained resources) and simplifies data types
-  (e.g. CodeableConcept → `{coding:[{code,display}],text}`) using R4 model
+  token-efficient format or raw FHIR JSON. **Compact output is AI-oriented JSON,
+  not canonical FHIR** — it is intentionally lossy, optimised for token
+  efficiency, and should not be round-tripped back to a FHIR server. Compact
+  mode strips FHIR noise (meta, extensions, narrative, contained resources) and
+  simplifies data types (e.g. CodeableConcept → `{coding:[{code,display}],text}`,
+  Reference → `"Patient/pat-1"`, Quantity → `{value,unit}`) using R4 model
   metadata from the `fhirpath` dependency. Compact Bundles preserve native keys
   (`entry`, `link`) for pagination compatibility. Searches default to compact;
   direct reads default to full. Set `FHIR_RESPONSE_MODE` to override or lock
@@ -207,27 +210,29 @@ Everything in `config/` is yours to edit — no source changes needed:
 
 | File | Purpose |
 |---|---|
-| [`definitions.json`](config/definitions.json) | FHIR resource → MCP tool mappings, search params, and search-control descriptions (see [Definitions](#definitions) below) |
+| [`resources.json`](config/resources.json) | FHIR resource → MCP tool mappings and search params (see [Definitions](#definitions) below) |
+| [`search-controls.json`](config/search-controls.json) | Search-control parameter descriptions injected into tool schemas |
 | [`instructions.md`](config/instructions.md) | System prompt sent to the AI client — controls how the model uses FHIR tools |
 | [`messages.json`](config/messages.json) | Every user-facing message, error, and note the server can return |
 | [`core-tools.json`](config/core-tools.json) | Built-in tool definitions (`paginate`, `capabilities`) — descriptions and param hints |
 
-Changes take effect on restart. In development, `definitions.json` also
-hot-reloads (see [Hot-reload](#hot-reload-dev-mode)).
+Changes take effect on restart. In development, `resources.json` and
+`search-controls.json` also hot-reload (see [Hot-reload](#hot-reload-dev-mode)).
 
 ## Definitions
 
-fhirHydrant uses [config/definitions.json](config/definitions.json) to map FHIR
-resource types to MCP tools. Edit that file directly when customizing resources.
+fhirHydrant uses two config files to define MCP tools:
 
-### Definitions schema
+- [config/resources.json](config/resources.json) — maps FHIR resource types to MCP tools
+- [config/search-controls.json](config/search-controls.json) — describes search-control parameters injected into tool schemas
 
-[config/definitions.json](config/definitions.json) is an object with two top-level keys:
+### Search controls
 
-| Key                    | Type                     | Description                                                                                          |
-| ---------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `searchControls`  | `Record<string, string>` | User-editable descriptions for FHIR search-control parameters and local response controls. Server-side controls (`_count`, `_sort`, `_summary`, `_elements`, `_include`, `_revinclude`) are injected into a tool's schema only when the FHIR server's `/metadata` advertises them. Local controls (`fhirpath`) are always injected regardless of metadata. Omit a key to suppress injection. |
-| `resources`            | `array`                  | Array of resource definitions (see below)                                                            |
+[config/search-controls.json](config/search-controls.json) is a flat `Record<string, string>`. Each key is a search-control parameter name and each value is its description. Server-side controls (`_count`, `_sort`, `_summary`, `_elements`, `_include`, `_revinclude`) are injected into a tool's schema only when the FHIR server's `/metadata` advertises them. Local controls (`fhirpath`, `responseMode`) are always injected regardless of metadata. Omit a key to suppress injection.
+
+### Resources schema
+
+[config/resources.json](config/resources.json) is a top-level JSON array of resource definitions:
 
 #### Resource entry fields
 
@@ -312,7 +317,7 @@ Prefer stdio for local desktop clients, HTTP for remote/networked clients.
 
 ### Resource tools
 
-Defined in [config/definitions.json](config/definitions.json). The default set:
+Defined in [config/resources.json](config/resources.json). The default set:
 
 | Tool          | Resource    | Direct read |
 | ------------- | ----------- | ----------- |

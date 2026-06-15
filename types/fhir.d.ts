@@ -1,4 +1,4 @@
-/** Raw shape of a single entry in config/definitions.json. */
+/** Raw shape of a single entry in config/resources.json. */
 interface ResourceDefinitionRaw {
    resourceType: string
    toolName: string
@@ -21,16 +21,9 @@ interface ResourceDefinition {
    searchSchema: import("zod").ZodObject<import("zod").ZodRawShape>
 }
 
-/** Raw shape of the config/definitions.json file (object format). */
-interface DefinitionFileRaw {
-   searchControls: Record<string, string>
-   resources: ResourceDefinitionRaw[]
-}
-
-/** Return shape of validateDefinitions. */
+/** Return shape of validateResources. */
 interface ValidationResult {
    entries: ResourceDefinitionRaw[]
-   searchControls: Record<string, string>
    errors: string[]
 }
 
