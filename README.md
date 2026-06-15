@@ -1,6 +1,6 @@
 # fhirHydrant
 
-An MCP server for connecting AI clients to FHIR APIs.
+A Node.js MCP server written in TypeScript for connecting healthcare AI clients to FHIR APIs.
 
 Authenticates via SMART Backend Services, exposes configurable resource tools
 with FHIR Bundle pagination, and supports both Streamable HTTP and stdio
