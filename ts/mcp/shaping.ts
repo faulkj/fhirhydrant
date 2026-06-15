@@ -14,7 +14,7 @@ export const canShapeCount = (resourceType: string): { allowed: boolean, warn?: 
 const shapeCount = (params: URLSearchParams, resourceType: string): { injected: boolean, capped: boolean } => {
    const
       raw = params.get("_count"),
-      n = raw !== null ? parseInt(raw, 10) : NaN
+      n = raw !== null && /^\d+$/.test(raw) ? Number(raw) : NaN
    if (raw === null || !Number.isFinite(n) || n < 1) {
       params.set("_count", String(config.fhirDefaultCount))
       config.debug && console.log(`✂️ ${resourceType}: _count${raw === null ? ` not provided, defaulted to ${config.fhirDefaultCount}` : `="${raw}" invalid, replaced with ${config.fhirDefaultCount}`}`)

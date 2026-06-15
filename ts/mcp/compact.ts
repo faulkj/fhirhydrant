@@ -20,10 +20,12 @@ export const compact = (data: unknown): unknown => {
                })
                .filter(Boolean)
             : undefined,
+         nextLink = (Array.isArray(r.link) ? r.link as Record<string, unknown>[] : [])
+            .find((l) => l?.relation === "next" && typeof l?.url === "string"),
          out: Record<string, unknown> = { resourceType: "Bundle" }
       r.type !== undefined && (out.type = r.type)
       r.total !== undefined && (out.total = r.total)
-      r.link !== undefined && (out.link = r.link)
+      nextLink && (out.link = [{ relation: "next", url: nextLink.url }])
       entries?.length && (out.entry = entries)
       return out
    }

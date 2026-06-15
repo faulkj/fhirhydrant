@@ -1,6 +1,34 @@
 import fhirpath_r4_model from "fhirpath/fhir-context/r4/index.js"
 
-export { compactNode }
+export const compactNode = (value: unknown, path: string, isRoot: boolean): unknown => {
+   if (value === null || value === undefined) return undefined
+   if (Array.isArray(value)) {
+      const arr = value.map((item, i) => compactNode(item, path, false)).filter((v) => v !== undefined)
+      return arr.length ? arr : undefined
+   }
+   if (typeof value !== "object") return value
+
+   const
+      obj = value as Record<string, unknown>,
+      type = resolveType(path),
+      simplified = simplify(type, obj)
+   if (simplified !== undefined) return simplified
+
+   const out: Record<string, unknown> = {}
+   for (const [key, val] of Object.entries(obj)) {
+      if (NOISE.has(key)) continue
+      if (key.startsWith("_")) continue
+      if (key === "id" && !isRoot) continue
+      if (key === "resourceType") { out[key] = val; continue }
+
+      const
+         childPath = `${path}.${key}`,
+         childType = resolveType(childPath),
+         compacted = compactNode(val, childType && !isType(childType, "BackboneElement") ? childType : childPath, false)
+      if (compacted !== undefined) out[key] = compacted
+   }
+   return Object.keys(out).length ? out : undefined
+}
 
 const
    raw = fhirpath_r4_model as Record<string, unknown>,
@@ -16,7 +44,9 @@ const
    resolveType = (path: string): string | undefined => {
       if (!modelOk) return undefined
       const types = p2t![path]
-      return Array.isArray(types) ? types[0] : types
+      if (types) return Array.isArray(types) ? types[0] : types
+      if (t2p![path]) return path
+      return undefined
    },
 
    isType = (type: string | undefined, ancestor: string): boolean => {
@@ -47,11 +77,12 @@ const
             coding = Array.isArray(v.coding)
                ? v.coding.map((c: Record<string, unknown>) => simplifyCoding(c)).filter(Boolean)
                : undefined,
-            text = v.text
+            text = v.text,
+            textIsDup = coding?.length === 1 && text === (coding[0] as Record<string, unknown>).display
          if (!coding?.length && !text) return undefined
          const out: Record<string, unknown> = {}
          coding?.length && (out.coding = coding)
-         text && (out.text = text)
+         text && !textIsDup && (out.text = text)
          return out
       },
       Coding: simplifyCoding,
@@ -73,34 +104,4 @@ const
       if (SIMPLIFIERS[type]) return SIMPLIFIERS[type](value)
       if (isType(type, "Quantity")) return quantitySimplifier(value)
       return undefined
-   },
-
-   compactNode = (value: unknown, path: string, isRoot: boolean): unknown => {
-      if (value === null || value === undefined) return undefined
-      if (Array.isArray(value)) {
-         const arr = value.map((item, i) => compactNode(item, path, false)).filter((v) => v !== undefined)
-         return arr.length ? arr : undefined
-      }
-      if (typeof value !== "object") return value
-
-      const
-         obj = value as Record<string, unknown>,
-         type = resolveType(path),
-         simplified = simplify(type, obj)
-      if (simplified !== undefined) return simplified
-
-      const out: Record<string, unknown> = {}
-      for (const [key, val] of Object.entries(obj)) {
-         if (NOISE.has(key)) continue
-         if (key.startsWith("_")) continue
-         if (key === "id" && !isRoot) continue
-         if (key === "resourceType") { out[key] = val; continue }
-
-         const
-            childPath = `${path}.${key}`,
-            childType = resolveType(childPath),
-            compacted = compactNode(val, childType && !isType(childType, "BackboneElement") ? childType : childPath, false)
-         if (compacted !== undefined) out[key] = compacted
-      }
-      return Object.keys(out).length ? out : undefined
    }

@@ -18,7 +18,7 @@ const
    parsePort = (): number => {
       const
          raw = opt("PORT") ?? "5000",
-         port = parseInt(raw, 10)
+         port = /^\d+$/.test(raw) ? Number(raw) : NaN
       if (!Number.isFinite(port) || port < 1 || port > 65535)
          throw new Error(`Invalid PORT="${raw}" — must be 1–65535`)
       return port
@@ -53,7 +53,7 @@ const
    parsePositiveInt = (key: string, fallback: number): number => {
       const
          raw = opt(key),
-         val = raw ? parseInt(raw, 10) : fallback
+         val = raw ? (/^\d+$/.test(raw) ? Number(raw) : NaN) : fallback
       if (!Number.isFinite(val) || val < 1)
          throw new Error(`Invalid ${key}="${raw}" — must be a positive integer`)
       return val
