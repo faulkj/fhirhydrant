@@ -3,7 +3,7 @@
 A Node.js MCP server written in TypeScript for connecting healthcare AI clients to FHIR APIs.
 
 Authenticates via SMART Backend Services, exposes configurable resource tools
-with FHIR Bundle pagination, and supports both Streamable HTTP and stdio
+with FHIR Bundle pagination, and supports Streamable HTTP and stdio
 transports.
 
 > **PHI note:** FHIR data returned through MCP tool calls contains PHI. Ensure
@@ -115,7 +115,7 @@ To rotate:
 | ------------------------- | --------------------- | ----------------------------------------------------------------- |
 | `FHIR_SERVER_URL`         | `<base>/api/FHIR/R4`  | Override the derived FHIR API URL for non-standard server layouts |
 | `FHIR_TOKEN_URL`          | `<base>/oauth2/token` | Override the derived token endpoint URL                           |
-| `MCP_TRANSPORT`           | `http`                | `http` for Streamable HTTP, `stdio` for stdio                     |
+| `MCP_TRANSPORT`           | `http`                | `http` for stateless Streamable HTTP, `stdio` for stdio |
 | `PORT`                    | `5000`                | HTTP listener port (1–65535)                                      |
 | `BIND_HOST`               | `127.0.0.1`           | Bind address for HTTP listener — set to `0.0.0.0` for container/LAN access |
 | `ALLOWED_HOSTS`           | —                     | Comma-separated hostnames for DNS rebinding protection — set when exposing HTTP on a public network |

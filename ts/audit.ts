@@ -1,4 +1,5 @@
 import { appendFile } from "node:fs/promises"
+import { accessSync, constants } from "node:fs"
 import { AsyncLocalStorage } from "node:async_hooks"
 
 const auditContext = new AsyncLocalStorage<AuditContext>()
@@ -8,16 +9,25 @@ let sinks: AuditSinkFn[] = []
 /** Initializes audit sinks from config. Call once at startup before any tool dispatch. */
 export const initAuditSinks = (names: AuditSinkName[], filePath: string): void => {
    sinks = []
+   const active: string[] = []
    for (const name of names) {
       if (name === "console")
-         sinks.push((e) => console.log(`🔍 ${JSON.stringify(e)}`))
-      else if (name === "file")
-         sinks.push((e) =>
-            void appendFile(filePath, JSON.stringify(e) + "\n", "utf8")
-               .catch((err) => console.error(`🔍 File write failed: ${err instanceof Error ? err.message : err}`)),
-         )
+         sinks.push((e) => console.log(`🔍 ${JSON.stringify(e)}`)),
+         active.push("console")
+      else if (name === "file") {
+         try {
+            accessSync(filePath, constants.W_OK)
+            sinks.push((e) =>
+               void appendFile(filePath, JSON.stringify(e) + "\n", "utf8")
+                  .catch((err) => console.error(`🔍 File write failed: ${err instanceof Error ? err.message : err}`)),
+            )
+            active.push("file")
+         } catch {
+            console.warn(`🔍 Audit file not writable: ${filePath} — file sink disabled`)
+         }
+      }
    }
-   sinks.length && console.info(`🔍 Active sinks: ${names.join(", ")}`)
+   active.length && console.info(`🔍 Active sinks: ${active.join(", ")}`)
 }
 
 /** Runs `fn` within an audit context so emitAudit can merge request-scoped fields automatically. */

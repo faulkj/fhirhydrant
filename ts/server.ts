@@ -6,6 +6,12 @@ for (const level of ["log", "info", "warn", "error"] as const) {
    console[level] = (...args: unknown[]) => original(new Date().toISOString().replace("T", " ").slice(0, 19), ...args)
 }
 
+// stdio: redirect stdout logging to stderr before anything else runs
+if ((process.env["MCP_TRANSPORT"] ?? "http").toLowerCase() === "stdio") {
+   console.log = (...args: unknown[]) => console.error(...args)
+   console.info = (...args: unknown[]) => console.error(...args)
+}
+
 import { readFileSync, watch } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -17,7 +23,8 @@ import { getConfigDir, reloadDefinitions, getScopes } from "./fhir/model/definit
 import { fetchMetadata } from "./fhir/model/metadata.ts"
 import { registerAll } from "./mcp/resources.ts"
 import { registerCoreTools } from "./mcp/core-tools.ts"
-import { startHttp, startStdio } from "./mcp/transport.ts"
+import { startHttp } from "./mcp/transport/http.ts"
+import { startStdio } from "./mcp/transport/stdio.ts"
 
 const
    { version: pkgVersion } = JSON.parse(
@@ -78,18 +85,20 @@ const
       console.info(`👀 Watching config/ for changes`)
    }
 
-const selfHostJwks = config.transport === "http" && !config.fhirJwksUrl
+const selfHostJwks = config.transport !== "stdio" && !config.fhirJwksUrl
 
 if (!selfHostJwks) await startAuth()
 
-const { attach, close } = config.transport === "stdio" ? await startStdio() : await startHttp()
+const { attach, close } =
+   config.transport === "stdio"
+      ? await startStdio()
+      : await startHttp()
 
 if (selfHostJwks) await startAuth()
 
 if (config.metadataMode !== "off") await fetchMetadata()
 
-const server = makeServer()
-await attach(server)
+await attach(makeServer)
 
 process.env["NODE_ENV"] !== "production" && startDefinitionsWatcher()
 
@@ -100,7 +109,6 @@ const shutdown = async (code = 0): Promise<void> => {
    shutdownInProgress = true
    console.info("🛑 Shutting down...")
    stopAuth()
-   await server.close()
    await close()
    process.exit(code)
 }

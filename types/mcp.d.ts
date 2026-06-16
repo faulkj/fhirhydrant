@@ -20,6 +20,12 @@ interface BundleStats {
    nextUrl: string | undefined
 }
 
+/** Handle returned by transport start functions; provides attach (bind server factory) and close operations. */
+interface TransportHandle {
+   attach: (factory: () => import("@modelcontextprotocol/server").McpServer) => Promise<void>
+   close: () => Promise<void>
+}
+
 /** Result of resource request validation — either success (directId + op) or an early-exit MCP error response. */
 type GuardResult =
    | { ok: true; directId: string | undefined; op: AuditEvent["operation"] }

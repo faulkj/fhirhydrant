@@ -29,7 +29,7 @@
    {
       "resourceType": "Observation",
       "toolName": "observation",
-      "description": "Search for or read a FHIR Observation resource. For direct read, provide _id alone. For search, patient is required. Optionally filter by category (e.g. laboratory, vital-signs, core-characteristics) and/or code (LOINC). Use category=core-characteristics with code 76516-4 (gestational age) or 8339-4 (birth weight) for core characteristic lookups.",
+      "description": "Search for or read a FHIR Observation resource. For direct read, provide _id alone. For search, patient is always required plus at least one of category or code. Common categories: laboratory, vital-signs, core-characteristics. Use category=core-characteristics with code 76516-4 (gestational age) or 8339-4 (birth weight) for core characteristic lookups.",
       "supportsDirectRead": true,
       "searchParams": {
          "_id": "Observation resource ID — performs direct read when provided alone",
@@ -39,7 +39,10 @@
          "date": "Date or date range (e.g. ge2024-01-01)",
          "status": "Observation status (e.g. final, preliminary)"
       },
-      "requireOneOf": ["patient"]
+      "requireCombination": [
+         ["patient", "category"],
+         ["patient", "code"]
+      ]
    },
    {
       "resourceType": "Condition",

@@ -38,7 +38,7 @@ export const withRetry = async <T>(
          const timedOut = isTimeout(err)
          if (i + 1 >= attempts || (!timedOut && !retryable(err))) throw err
          const delay = 1000 * 2 ** i
-         console.warn(`🔥 ${label} ${timedOut ? "timed out" : "transient error"}, retrying in ${delay}ms (${i + 1}/${attempts})`)
+         console.warn(`🔥 ${label} — ${timedOut ? "timed out" : "transient error"}, retrying in ${delay}ms (${i + 1}/${attempts})`)
          await new Promise((r) => setTimeout(r, delay))
       }
    }

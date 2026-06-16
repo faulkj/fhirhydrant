@@ -38,13 +38,14 @@ export const makeHandler =
          emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "blocked", durationMs: auditTime(t0), metadataBlocked: true })
          return { content: [{ type: "text" as const, text: cap.error }], isError: true }
       }
+      const logTag = `${def.resourceType}.${op[0].toUpperCase()}${op.slice(1)}`
       try {
          const
             shape = directId ? { allowed: false } : canShapeCount(def.resourceType),
             client = createFhirClient(),
             search = directId ? undefined : buildSearchUrl(def.resourceType, args, shape.allowed)
          let url = directId ? `${def.resourceType}/${directId}` : search!.url, retries = 0, currentCount = 0
-         console.log(`🔥 ${def.resourceType} ${op}${config.debug ? ` → ${url}` : ""}`)
+         config.debug && console.log(`🔥 ${logTag} → ${url}`)
 
          let result: unknown, json: string, stats: ReturnType<typeof bundleStats>,
             shaped: ReturnType<typeof enforceByteLimit>, filtered = false, matchCount = 0, compacted = false
@@ -95,7 +96,7 @@ export const makeHandler =
             console.log(`✂️ ${def.resourceType}: response too large, retrying with _count=${currentCount}`)
          }
 
-         console.log(`🔥 ${def.resourceType} OK`)
+         console.log(`🟢 ${logTag} OK`)
          emitAudit({
             ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op,
             status: shaped.isError ? "truncated" : "ok", durationMs: auditTime(t0), httpStatus: 200,
@@ -114,7 +115,7 @@ export const makeHandler =
          }
       } catch (err) {
          const { log, client } = formatFhirError(err)
-         console.error(`🔥 ${def.resourceType} ERR ${log}`)
+         console.error(`🔴 ${logTag} ERR ${log}`)
          emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "error", durationMs: auditTime(t0), httpStatus: errorStatus(err) })
          return { content: [{ type: "text" as const, text: client }], isError: true }
       }

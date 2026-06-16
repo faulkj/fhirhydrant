@@ -30,9 +30,7 @@ export const addPaginate = (
                validatedUrl = validatePageUrl(args["url"] as string),
                client = createFhirClient()
 
-            config.debug
-               ? console.log(`🔥 paginate → ${validatedUrl}`)
-               : console.log("🔥 paginate")
+            config.debug && console.log(`🔥 Paginate → ${validatedUrl}`)
 
             const result = await withRetry(
                "paginate",
@@ -73,7 +71,7 @@ export const addPaginate = (
                ].filter(Boolean),
                prefix = notes.length ? notes.join("\n") + "\n\n" : "",
                shaped = enforceByteLimit(`${prefix}${json}`, config.fhirMaxResponseBytes)
-            console.log("🔥 paginate OK")
+            console.log("🟢 Paginate OK")
             emitAudit({
                ts: new Date().toISOString(), tool: "paginate", operation: "paginate",
                status: shaped.isError ? "truncated" : "ok", durationMs: auditTime(t0), httpStatus: 200,
@@ -89,7 +87,7 @@ export const addPaginate = (
             }
          } catch (err) {
             const { log, client } = formatFhirError(err)
-            console.error(`🔥 paginate ERR ${log}`)
+            console.error(`🔴 Paginate ERR ${log}`)
             emitAudit({ ts: new Date().toISOString(), tool: "paginate", operation: "paginate", status: "error", durationMs: auditTime(t0), httpStatus: errorStatus(err) })
             return {
                content: [{ type: "text" as const, text: messages.paginationRetryHint.replace("{message}", client) }],
