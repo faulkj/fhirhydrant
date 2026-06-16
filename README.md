@@ -293,7 +293,7 @@ fhirHydrant uses two config files to define MCP tools:
 
 | Field                | Type                     | Description                                                                                     |
 | -------------------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
-| `resourceType`       | `string`                 | FHIR resource type (e.g. `AllergyIntolerance`)                                                  |
+| `resource`           | `string`                 | FHIR resource type (e.g. `AllergyIntolerance`)                                                  |
 | `toolName`           | `string`                 | MCP tool name — must be unique across all entries                                               |
 | `description`        | `string`                 | Human-readable tool description shown to the AI client                                          |
 | `supportsDirectRead` | `boolean`                | Enable `/ResourceType/{id}` reads when `_id` is provided alone                                  |

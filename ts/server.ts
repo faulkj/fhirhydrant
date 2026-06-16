@@ -19,7 +19,7 @@ import { McpServer } from "@modelcontextprotocol/server"
 import { config } from "./config.ts"
 import { initAuditSinks } from "./audit.ts"
 import { startAuth, stopAuth, restartAuth } from "./fhir/auth/auth.ts"
-import { getConfigDir, reloadDefinitions, getScopes } from "./fhir/model/definitions.ts"
+import { getConfigDir, reloadDefinitions, getRequestedScopes } from "./fhir/model/definitions.ts"
 import { fetchMetadata } from "./fhir/model/metadata.ts"
 import { registerAll } from "./mcp/resources.ts"
 import { registerCoreTools } from "./mcp/core-tools.ts"
@@ -58,12 +58,12 @@ const
          clearTimeout(debounce)
          debounce = setTimeout(async () => {
             const
-               prevScopes = getScopes().join(","),
+               prevScopes = getRequestedScopes().join(","),
                ok = reloadDefinitions()
             if (!ok) return
             console.log(`📋 Reloaded from ${filename}`)
             console.log("📋 Metadata cache may be stale — restart to re-validate against /metadata")
-            if (getScopes().join(",") !== prevScopes) {
+            if (getRequestedScopes().join(",") !== prevScopes) {
                if (restartingAuth)
                   return void console.log(
                      "📋 Auth restart already in progress — skipping",

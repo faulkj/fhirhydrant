@@ -9,7 +9,7 @@ import { config } from "../../config.ts"
 export const getDefinitions = (): ResourceDefinition[] => snapshot.definitions
 
 /** Returns the SMART scopes derived from the current definitions snapshot. */
-export const getScopes = (): string[] => snapshot.scopes
+export const getRequestedScopes = (): string[] => snapshot.scopes
 
 /** Returns the user-editable search-control descriptions from config/search-controls.json. */
 export const getSearchControls = (): Record<string, string> => snapshot.searchControls

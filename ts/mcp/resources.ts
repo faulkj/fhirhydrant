@@ -3,17 +3,22 @@ import * as z from "zod"
 import messages from "../../config/messages.json" with { type: "json" }
 import { config } from "../config.ts"
 import { getDefinitions, getSearchControls, buildShape } from "../fhir/model/definitions.ts"
-import { getResourceMeta } from "../fhir/model/metadata.ts"
-import { filterAndValidateDefinitions } from "./filter-definitions.ts"
+import { getResourceMeta, setSkippedTools } from "../fhir/model/metadata.ts"
+import { getTokenResponse } from "../fhir/auth/auth.ts"
+import { parseGrantedScopes } from "../fhir/auth/scopes.ts"
+import { filterByMetadata, filterByScopes } from "./filter-definitions.ts"
 import { getEnabledActions } from "./validation.ts"
 import { makeHandler } from "./handler.ts"
+
+let registeredCount = 0
 
 const
    LOCAL_CONTROLS = new Set(["fhirpath", ...(config.responseMode !== "compact-locked" ? ["responseMode"] : [])]),
    WRITE_WITH_BODY = new Set<ToolAction>(["create", "update", "patch"])
 
 const augmentSchema = (
-   def: ResourceDefinition, meta: ResourceMeta | undefined, controlParams: Record<string, string>,
+   def: ResourceDefinition, meta: ResourceMeta | undefined,
+   controlParams: Record<string, string>, scopeMap: Map<string, Set<ScopePermission>>,
 ): { schema: z.ZodObject<z.ZodRawShape>; injected: string[]; description: string } => {
    const merged = { ...def.searchParams }, injected: string[] = []
    for (const [param, desc] of Object.entries(controlParams)) {
@@ -33,7 +38,7 @@ const augmentSchema = (
    }
 
    const
-      actions = getEnabledActions(def),
+      actions = getEnabledActions(def, scopeMap),
       hasWrites = actions.some((a) => WRITE_WITH_BODY.has(a)),
       shape: Record<string, z.ZodTypeAny> = { ...buildShape(merged, def.resource, def.supportsDirectRead) }
 
@@ -63,13 +68,24 @@ const augmentSchema = (
    return { schema: z.object(shape), injected, description }
 }
 
+/** Returns the number of resource tools registered after metadata + scope gating. */
+export const getRegisteredToolCount = (): number => registeredCount
+
 /** Registers an MCP tool for every ResourceDefinition in the current snapshot. */
 export const registerAll = (server: McpServer): void => {
-   const controlParams = getSearchControls()
-   for (const def of filterAndValidateDefinitions(getDefinitions())) {
+   const
+      controlParams = getSearchControls(),
+      scopeMap = parseGrantedScopes(getTokenResponse().scope),
+      metaResult = filterByMetadata(getDefinitions()),
+      scopeResult = filterByScopes(metaResult.definitions, scopeMap)
+
+   setSkippedTools([...metaResult.skipped, ...scopeResult.skipped])
+   scopeMap.size > 0 && console.info(`🔑 Scope gate active — ${scopeResult.definitions.length}/${metaResult.definitions.length} resource(s) allowed`)
+
+   for (const def of scopeResult.definitions) {
       const
          meta = getResourceMeta(def.resource),
-         { schema, injected, description } = augmentSchema(def, meta, controlParams)
+         { schema, injected, description } = augmentSchema(def, meta, controlParams, scopeMap)
       config.debug && injected.length && console.log(`📋 ${def.resource}: injected ${injected.join(", ")}`)
       server.registerTool(
          def.toolName,
@@ -77,4 +93,5 @@ export const registerAll = (server: McpServer): void => {
          makeHandler(def.toolName),
       )
    }
+   registeredCount = scopeResult.definitions.length
 }

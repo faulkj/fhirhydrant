@@ -3,6 +3,8 @@ import type { z } from "zod"
 import messages from "../../../config/messages.json" with { type: "json" }
 import { fetchMetadata, getCapabilitySummary } from "../../fhir/model/metadata.ts"
 import { getDefinitions } from "../../fhir/model/definitions.ts"
+import { getTokenResponse } from "../../fhir/auth/auth.ts"
+import { parseGrantedScopes } from "../../fhir/auth/scopes.ts"
 import { formatFhirError } from "../../fhir/utils.ts"
 import { emitAudit, auditTime, errorStatus } from "../../audit.ts"
 import { getEnabledActions } from "../validation.ts"
@@ -27,11 +29,13 @@ export const addCapabilities = (
             }
             const
                defsByType = new Map(getDefinitions().map((d) => [d.resource, d])),
+               scopeMap = parseGrantedScopes(getTokenResponse().scope),
                enriched = {
                   ...summary,
+                  grantedScope: getTokenResponse().scope,
                   resources: summary.resources.map((r) => {
                      const def = defsByType.get(r.type)
-                     return { ...r, enabledOperations: def ? getEnabledActions(def) : [] }
+                     return { ...r, enabledOperations: def ? getEnabledActions(def, scopeMap) : [] }
                   }),
                }
             emitAudit({ ts: new Date().toISOString(), tool: "capabilities", operation: "capabilities", status: "ok", durationMs: auditTime(t0), ...(args["refresh"] ? { httpStatus: 200 } : {}) })

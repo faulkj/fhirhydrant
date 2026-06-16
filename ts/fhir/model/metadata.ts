@@ -88,7 +88,7 @@ export const fetchMetadata = async (): Promise<void> => {
          resources: summaryResources,
          skippedTools: skipped,
       }
-      console.info(`🏥 Loaded CapabilityStatement — ${summaryResources.length} resource types`)
+      config.debug && console.info(`🏥 Loaded CapabilityStatement — ${summaryResources.length} resource types`)
    } catch (err) {
       console.warn(
          "🏥 Could not fetch CapabilityStatement — skipping metadata gating:",

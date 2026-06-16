@@ -1,13 +1,12 @@
 import messages from "../../config/messages.json" with { type: "json" }
 import { config } from "../config.ts"
 import { isMetadataAvailable, getResourceMeta } from "../fhir/model/metadata.ts"
+import { scopeActions } from "../fhir/auth/scopes.ts"
 
-/**
- * Returns the full set of actions available for a resource definition,
- * considering both the FHIR_WRITE_CAPABILITIES env var and /metadata interactions.
- * Stateless — recomputed on every call so metadata refreshes take effect immediately.
- */
-export const getEnabledActions = (def: ResourceDefinition): ToolAction[] => {
+/** Returns actions available for a definition, considering write config, /metadata, and granted SMART scopes. */
+export const getEnabledActions = (
+   def: ResourceDefinition, scopeMap?: Map<string, Set<ScopePermission>>,
+): ToolAction[] => {
    const
       actions: ToolAction[] = [],
       checkMeta = isMetadataAvailable() && config.metadataMode !== "off",
@@ -17,7 +16,9 @@ export const getEnabledActions = (def: ResourceDefinition): ToolAction[] => {
    for (const w of config.writeCapabilities)
       if (config.metadataMode === "off" || (checkMeta && meta?.interactions.has(writeInteraction[w])))
          actions.push(w)
-   return actions
+
+   const allowed = scopeActions(def.resource, scopeMap)
+   return allowed.size === 0 ? [] : actions.filter((action) => allowed.has(action))
 }
 
 /** Validates date-typed search params. Returns an error string for the first malformed value, or undefined if all are valid. */

@@ -39,7 +39,11 @@ type TokenResponse = {
    token_type: "bearer"
    readonly access_token: string | undefined
    readonly expires_in: number | undefined
+   readonly scope?: string
 }
+
+/** Individual SMART v2 permission character. */
+type ScopePermission = "c" | "r" | "u" | "d" | "s"
 
 /** Shape of the object returned by calling the fhirclient smart() function — exposes the static client factory. */
 type SmartNamespace = {
@@ -84,8 +88,10 @@ interface CapabilitySummary {
       revincludes: string[]
       enabledOperations?: ToolAction[]
    }>
+   grantedScope?: string
    skippedTools: Array<{
       toolName: string
       reason: string
+      gate?: "metadata" | "scope"
    }>
 }

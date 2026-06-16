@@ -55,7 +55,7 @@
       "express": "^5.2.1",
       "fhirclient": "^2.6.3",
       "fhirpath": "^4.11.0",
-      "fhirstarterjs": "^1.0.5",
+      "fhirstarterjs": "^1.0.6",
       "zod": "^4.4.3"
    },
    "devDependencies": {

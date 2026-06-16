@@ -4,7 +4,7 @@ import { withAuditContext } from "../../audit.ts"
 import { jwksHandler } from "../../fhir/auth/jwks.ts"
 import { getTokenResponse } from "../../fhir/auth/auth.ts"
 import { isMetadataAvailable } from "../../fhir/model/metadata.ts"
-import { getDefinitions } from "../../fhir/model/definitions.ts"
+import { getRegisteredToolCount } from "../resources.ts"
 
 /** Starts the Streamable HTTP MCP transport and returns a handle to attach a server and shut down the listener. */
 export const startHttp = async (): Promise<TransportHandle> => {
@@ -31,7 +31,7 @@ export const startHttp = async (): Promise<TransportHandle> => {
          status: "ok",
          mcp: mcpReady,
          metadata: isMetadataAvailable(),
-         tools: getDefinitions().length,
+         tools: getRegisteredToolCount(),
          auth: token.access_token !== undefined,
          ...(token.expires_in !== undefined && { tokenExpiresIn: token.expires_in }),
       })

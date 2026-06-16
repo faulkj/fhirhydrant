@@ -2,6 +2,8 @@ import messages from "../../config/messages.json" with { type: "json" }
 import { config } from "../config.ts"
 import { getDefinitions } from "../fhir/model/definitions.ts"
 import { createFhirClient } from "../fhir/auth/client.ts"
+import { getTokenResponse } from "../fhir/auth/auth.ts"
+import { parseGrantedScopes, scopeActions } from "../fhir/auth/scopes.ts"
 import { withRetry, enforceByteLimit, formatFhirError } from "../fhir/utils.ts"
 import { emitAudit, auditTime, errorStatus } from "../audit.ts"
 import { canShapeCount, buildSearchUrl, rebuildWithCount } from "../fhir/transform/shaping.ts"
@@ -28,6 +30,13 @@ export const makeHandler =
          guard = validateResourceRequest(def, args, toolName, t0)
       if (!guard.ok) return guard.response
       const { directId, op } = guard
+
+      const scopeAllowed = scopeActions(def.resource, parseGrantedScopes(getTokenResponse().scope))
+      if (!scopeAllowed.has(op as ToolAction)) {
+         emitAudit({ ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op, status: "blocked", durationMs: auditTime(t0), scopeBlocked: true })
+         return { content: [{ type: "text" as const, text: `🔑 ${op} not permitted by granted scopes for ${def.resource}` }], isError: true }
+      }
+
       if (isWriteOp(op)) return executeWrite(toolName, def, op, args, t0, guard.parsedBody)
       const resolved = resolveResponseMode(explicit, directId)
       if (!resolved)

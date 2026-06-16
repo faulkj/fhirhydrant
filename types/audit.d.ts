@@ -29,6 +29,7 @@ interface AuditEvent {
    autoRetryCount?: number
    capWarning?: boolean
    metadataBlocked?: boolean
+   scopeBlocked?: boolean
    validationBlocked?: boolean
    fhirpathFiltered?: boolean
    fhirpathMatchCount?: number

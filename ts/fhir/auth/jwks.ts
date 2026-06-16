@@ -1,6 +1,6 @@
 import FHIRStarter from "fhirstarterjs"
 import { config } from "../../config.ts"
-import { getScopes } from "../model/definitions.ts"
+import { getRequestedScopes } from "../model/definitions.ts"
 
 /** Builds the JWKS document dynamically from all configured private keys. */
 const buildJwks = async (): Promise<string> => {
@@ -11,7 +11,7 @@ const buildJwks = async (): Promise<string> => {
                clientId: config.fhirClientId,
                privateKey,
                tokenEndpointUrl: config.fhirTokenEndpoint,
-               scopes: getScopes(),
+               scopes: getRequestedScopes(),
                keyId: kid,
             }),
             jwks = await starter.getJwks()

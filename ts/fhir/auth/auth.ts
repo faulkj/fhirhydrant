@@ -1,6 +1,6 @@
 import FHIRStarter from "fhirstarterjs"
 import { config } from "../../config.ts"
-import { getScopes } from "../model/definitions.ts"
+import { getRequestedScopes } from "../model/definitions.ts"
 
 let starter!: InstanceType<typeof FHIRStarter>
 
@@ -12,11 +12,18 @@ export const startAuth = async (): Promise<void> => {
       clientId: config.fhirClientId,
       privateKey: activeKey.privateKey,
       tokenEndpointUrl: config.fhirTokenEndpoint,
-      scopes: getScopes(),
+      scopes: getRequestedScopes(),
       keyId: activeKey.kid,
       ...(config.fhirJwksUrl && { jwksUrl: config.fhirJwksUrl }),
    })
    await starter.start()
+
+   const initialScope = starter.tokenResponse().scope ?? ""
+   starter.onRefresh(() => {
+      const refreshedScope = starter.tokenResponse().scope ?? ""
+      if (refreshedScope !== initialScope)
+         console.warn(`🔑 Granted scopes changed after token refresh — registered tools may be stale`)
+   })
 }
 
 /** Stops the proactive token-refresh loop. Call during graceful shutdown. */
