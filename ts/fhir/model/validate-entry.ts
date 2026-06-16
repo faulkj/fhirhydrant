@@ -19,19 +19,19 @@ export const validateEntry = (
       (!searchParams || typeof searchParams !== "object" || Array.isArray(searchParams))
    ) {
       errors.push(
-         `Invalid entry for resourceType "${text(entry["resourceType"]) ?? "(missing)"}": searchParams must be an object when provided`,
+         `Invalid entry for resource "${text(entry["resource"]) ?? "(missing)"}": searchParams must be an object when provided`,
       )
       return undefined
    }
 
    const
-      rt = text(entry["resourceType"]),
+      rt = text(entry["resource"]),
       name = text(entry["toolName"]),
       desc = text(entry["description"])
 
    if (!rt || !name || !desc || typeof entry.supportsDirectRead !== "boolean") {
       errors.push(
-         `Invalid entry for resourceType "${rt ?? "(missing)"}": requires resourceType, toolName, description (non-empty strings) and supportsDirectRead (boolean)`,
+         `Invalid entry for resource "${rt ?? "(missing)"}": requires resource, toolName, description (non-empty strings) and supportsDirectRead (boolean)`,
       )
       return undefined
    }
@@ -90,7 +90,7 @@ export const validateEntry = (
    }
 
    return {
-      resourceType: rt,
+      resource: rt,
       toolName: name,
       description: desc,
       supportsDirectRead: entry["supportsDirectRead"] as boolean,

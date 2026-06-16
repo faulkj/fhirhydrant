@@ -16,7 +16,7 @@ export const validateResourceRequest = (
    const
       action = typeof args["action"] === "string" ? args["action"] as ToolAction : undefined,
       block = (text: string, op: AuditEvent["operation"], extra?: Partial<AuditEvent>): GuardResult => {
-         emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "blocked", durationMs: auditTime(t0), ...extra })
+         emitAudit({ ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op, status: "blocked", durationMs: auditTime(t0), ...extra })
          return { ok: false, response: { content: [{ type: "text" as const, text }], isError: true } }
       }
 
@@ -64,7 +64,7 @@ const
          if (!def.requireCombination.some((combo) => combo.every(has)))
             return block(
                messages.requireCombinationFailed
-                  .replace("{resourceType}", def.resourceType)
+                  .replace("{resourceType}", def.resource)
                   .replace("{sets}", def.requireCombination.map((combo) => combo.join(" + ")).join(", or ")),
                "search", { validationBlocked: true },
             )

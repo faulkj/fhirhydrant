@@ -2,28 +2,28 @@ import { config } from "../../config.ts"
 import { isMetadataAvailable, getResourceMeta } from "../model/metadata.ts"
 
 /** Returns whether _count injection/capping is allowed for the given resource type given current metadata mode. */
-export const canShapeCount = (resourceType: string): { allowed: boolean, warn?: boolean } => {
+export const canShapeCount = (resource: string): { allowed: boolean, warn?: boolean } => {
    if (!isMetadataAvailable() || config.metadataMode === "off")
       return { allowed: true }
-   if (getResourceMeta(resourceType)?.searchParams.has("_count"))
+   if (getResourceMeta(resource)?.searchParams.has("_count"))
       return { allowed: true }
    if (config.metadataMode === "warn")
       return { allowed: true, warn: true }
    return { allowed: false }
 }
 
-const shapeCount = (params: URLSearchParams, resourceType: string): { injected: boolean, capped: boolean } => {
+const shapeCount = (params: URLSearchParams, resource: string): { injected: boolean, capped: boolean } => {
    const
       raw = params.get("_count"),
       n = raw !== null && /^\d+$/.test(raw) ? Number(raw) : NaN
    if (raw === null || !Number.isFinite(n) || n < 1) {
       params.set("_count", String(config.fhirDefaultCount))
-      config.debug && console.log(`✂️ ${resourceType}: _count${raw === null ? ` not provided, defaulted to ${config.fhirDefaultCount}` : `="${raw}" invalid, replaced with ${config.fhirDefaultCount}`}`)
+      config.debug && console.log(`✂️ ${resource}: _count${raw === null ? ` not provided, defaulted to ${config.fhirDefaultCount}` : `="${raw}" invalid, replaced with ${config.fhirDefaultCount}`}`)
       return { injected: true, capped: false }
    }
    if (n > config.fhirMaxCount) {
       params.set("_count", String(config.fhirMaxCount))
-      config.debug && console.log(`✂️ ${resourceType}: _count=${n} capped to ${config.fhirMaxCount}`)
+      config.debug && console.log(`✂️ ${resource}: _count=${n} capped to ${config.fhirMaxCount}`)
       return { injected: false, capped: true }
    }
    return { injected: false, capped: false }
@@ -31,7 +31,7 @@ const shapeCount = (params: URLSearchParams, resourceType: string): { injected: 
 
 /** Builds a FHIR search URL from tool args, injecting and capping _count as configured. */
 export const buildSearchUrl = (
-   resourceType: string,
+   resource: string,
    args: Record<string, unknown>,
    applyCount: boolean,
 ): { url: string, countInjected: boolean, countCapped: boolean, countSkipped: boolean } => {
@@ -41,15 +41,15 @@ export const buildSearchUrl = (
    let countInjected = false, countCapped = false
    const countSkipped = !applyCount
    if (applyCount) {
-      const s = shapeCount(params, resourceType)
+      const s = shapeCount(params, resource)
       countInjected = s.injected
       countCapped = s.capped
    } else {
-      config.debug && console.log(`✂️ ${resourceType}: _count skipped (not advertised, strict mode)`)
+      config.debug && console.log(`✂️ ${resource}: _count skipped (not advertised, strict mode)`)
    }
    const qs = params.toString()
    return {
-      url: qs ? `${resourceType}?${qs}` : resourceType,
+      url: qs ? `${resource}?${qs}` : resource,
       countInjected,
       countCapped,
       countSkipped,

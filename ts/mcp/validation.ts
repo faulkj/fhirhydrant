@@ -11,7 +11,7 @@ export const getEnabledActions = (def: ResourceDefinition): ToolAction[] => {
    const
       actions: ToolAction[] = [],
       checkMeta = isMetadataAvailable() && config.metadataMode !== "off",
-      meta = checkMeta ? getResourceMeta(def.resourceType) : undefined
+      meta = checkMeta ? getResourceMeta(def.resource) : undefined
    if (def.supportsDirectRead) actions.push("read")
    actions.push("search")
    for (const w of config.writeCapabilities)
@@ -41,10 +41,10 @@ export const checkRuntimeCapability = (
 ): { error?: string; warning?: string } => {
    if (!isMetadataAvailable() || config.metadataMode === "off") return {}
 
-   const meta = getResourceMeta(def.resourceType)
+   const meta = getResourceMeta(def.resource)
 
    if (!meta)
-      return { error: messages.resourceNotAdvertised.replace("{resourceType}", def.resourceType) }
+      return { error: messages.resourceNotAdvertised.replace("{resourceType}", def.resource) }
 
    if (!directId) {
       const
@@ -74,7 +74,7 @@ export const checkRuntimeCapability = (
 
       if (parts.length > 0) {
          const msg = messages.capabilityMismatch
-            .replace("{resourceType}", def.resourceType)
+            .replace("{resourceType}", def.resource)
             .replace("{parts}", parts.join("; "))
          if (config.metadataMode === "strict")
             return { error: messages.capabilityStrict.replace("{msg}", msg) }

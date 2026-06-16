@@ -36,23 +36,23 @@ export const makeHandler =
          { effectiveMode, wasDefaulted } = resolved,
          cap = checkRuntimeCapability(def, args, directId)
       if (cap.error) {
-         emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "blocked", durationMs: auditTime(t0), metadataBlocked: true })
+         emitAudit({ ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op, status: "blocked", durationMs: auditTime(t0), metadataBlocked: true })
          return { content: [{ type: "text" as const, text: cap.error }], isError: true }
       }
-      const logTag = `${def.resourceType}.${op[0].toUpperCase()}${op.slice(1)}`
+      const logTag = `${def.resource}.${op[0].toUpperCase()}${op.slice(1)}`
       try {
          const
-            shape = directId ? { allowed: false } : canShapeCount(def.resourceType),
+            shape = directId ? { allowed: false } : canShapeCount(def.resource),
             client = createFhirClient(),
-            search = directId ? undefined : buildSearchUrl(def.resourceType, args, shape.allowed)
-         let url = directId ? `${def.resourceType}/${directId}` : search!.url, retries = 0, currentCount = 0
+            search = directId ? undefined : buildSearchUrl(def.resource, args, shape.allowed)
+         let url = directId ? `${def.resource}/${directId}` : search!.url, retries = 0, currentCount = 0
          config.debug && console.log(`🔥 ${logTag} → ${url}`)
 
          let result: unknown, json: string, stats: ReturnType<typeof bundleStats>,
             shaped: ReturnType<typeof enforceByteLimit>, filtered = false, matchCount = 0, compacted = false
          while (true) { // eslint-disable-line no-constant-condition
             result = await withRetry(
-               `${def.resourceType} ${op}`,
+               `${def.resource} ${op}`,
                (signal) => client.request({ url, signal }),
                3,
                config.fhirRequestTimeoutMs,
@@ -64,7 +64,7 @@ export const makeHandler =
             if (fhirpathExpr) {
                const fp = applyFhirPath(result, fhirpathExpr)
                if ("error" in fp) {
-                  emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "error", durationMs: auditTime(t0), httpStatus: 200, fhirpathFiltered: true })
+                  emitAudit({ ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op, status: "error", durationMs: auditTime(t0), httpStatus: 200, fhirpathFiltered: true })
                   return { content: [{ type: "text" as const, text: messages.fhirpathError.replace("{error}", fp.error) }], isError: true }
                }
                filtered = true
@@ -79,7 +79,7 @@ export const makeHandler =
 
             const notes = [
                cap.warning,
-               shape.warn ? messages.countNotAdvertised.replace("{resourceType}", def.resourceType) : undefined,
+               shape.warn ? messages.countNotAdvertised.replace("{resourceType}", def.resource) : undefined,
                retries > 0 ? messages.responseAutoRetried
                   .replace("{original}", String(search ? new URLSearchParams(search.url.split("?")[1] ?? "").get("_count") ?? "?" : "?"))
                   .replace("{reduced}", String(currentCount)).replace("{limit}", String(config.fhirMaxResponseBytes)) : undefined,
@@ -94,12 +94,12 @@ export const makeHandler =
             currentCount = next
             retries++
             url = rebuildWithCount(search.url, currentCount)
-            console.log(`✂️ ${def.resourceType}: response too large, retrying with _count=${currentCount}`)
+            console.log(`✂️ ${def.resource}: response too large, retrying with _count=${currentCount}`)
          }
 
          console.log(`🟢 ${logTag} OK`)
          emitAudit({
-            ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op,
+            ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op,
             status: shaped.isError ? "truncated" : "ok", durationMs: auditTime(t0), httpStatus: 200,
             jsonBytes: Buffer.byteLength(json, "utf8"),
             ...(stats && { bundleEntries: stats.entries, bundleTotal: stats.total, hasNext: !!stats.nextUrl }),
@@ -117,7 +117,7 @@ export const makeHandler =
       } catch (err) {
          const { log, client } = formatFhirError(err)
          console.error(`🔴 ${logTag} ERR ${log}`)
-         emitAudit({ ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType, operation: op, status: "error", durationMs: auditTime(t0), httpStatus: errorStatus(err) })
+         emitAudit({ ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op, status: "error", durationMs: auditTime(t0), httpStatus: errorStatus(err) })
          return { content: [{ type: "text" as const, text: client }], isError: true }
       }
    }

@@ -35,7 +35,7 @@ const augmentSchema = (
    const
       actions = getEnabledActions(def),
       hasWrites = actions.some((a) => WRITE_WITH_BODY.has(a)),
-      shape: Record<string, z.ZodTypeAny> = { ...buildShape(merged, def.resourceType, def.supportsDirectRead) }
+      shape: Record<string, z.ZodTypeAny> = { ...buildShape(merged, def.resource, def.supportsDirectRead) }
 
    if (actions.length > 1 || hasWrites) {
       shape["action"] = z.enum(actions as [string, ...string[]])
@@ -54,7 +54,7 @@ const augmentSchema = (
       writeActions = actions.filter((a): a is WriteAction => WRITE_WITH_BODY.has(a) || a === "delete"),
       writeHints = writeActions
          .map((a) => (messages[`writeAction${a[0].toUpperCase()}${a.slice(1)}` as keyof typeof messages] as string)
-            .replace("{resourceType}", def.resourceType))
+            .replace("{resourceType}", def.resource))
          .join(" "),
       description = writeHints
          ? `${def.description} ${writeHints}`
@@ -68,9 +68,9 @@ export const registerAll = (server: McpServer): void => {
    const controlParams = getSearchControls()
    for (const def of filterAndValidateDefinitions(getDefinitions())) {
       const
-         meta = getResourceMeta(def.resourceType),
+         meta = getResourceMeta(def.resource),
          { schema, injected, description } = augmentSchema(def, meta, controlParams)
-      config.debug && injected.length && console.log(`📋 ${def.resourceType}: injected ${injected.join(", ")}`)
+      config.debug && injected.length && console.log(`📋 ${def.resource}: injected ${injected.join(", ")}`)
       server.registerTool(
          def.toolName,
          { description, inputSchema: schema },

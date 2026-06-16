@@ -1,6 +1,6 @@
 /** Raw shape of a single entry in config/resources.json. */
 interface ResourceDefinitionRaw {
-   resourceType: string
+   resource: string
    toolName: string
    description: string
    supportsDirectRead: boolean
@@ -11,7 +11,7 @@ interface ResourceDefinitionRaw {
 
 /** Describes a FHIR resource type and how it maps to an MCP tool. */
 interface ResourceDefinition {
-   resourceType: string
+   resource: string
    toolName: string
    description: string
    supportsDirectRead: boolean

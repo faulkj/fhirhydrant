@@ -26,7 +26,7 @@ export const addCapabilities = (
                }
             }
             const
-               defsByType = new Map(getDefinitions().map((d) => [d.resourceType, d])),
+               defsByType = new Map(getDefinitions().map((d) => [d.resource, d])),
                enriched = {
                   ...summary,
                   resources: summary.resources.map((r) => {

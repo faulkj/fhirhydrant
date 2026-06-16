@@ -14,7 +14,7 @@ type AuditSinkFn = (event: AuditEvent) => void
 interface AuditEvent {
    ts: string
    tool: string
-   resourceType?: string
+   resource?: string
    operation: "search" | "read" | "create" | "update" | "patch" | "delete" | "paginate" | "capabilities" | "lookup" | "expand"
    status: "ok" | "truncated" | "error" | "blocked"
    system?: string

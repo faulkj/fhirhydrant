@@ -12,7 +12,7 @@ export const validateWriteRequest = (
    const enabled = getEnabledActions(def)
    if (!enabled.includes(action)) {
       const msg = config.writeCapabilities.has(action as WriteAction)
-         ? messages.writeNotAdvertised.replace("{resourceType}", def.resourceType).replace("{action}", action)
+         ? messages.writeNotAdvertised.replace("{resourceType}", def.resource).replace("{action}", action)
          : messages.writeNotEnabled.replace("{action}", action)
       return block(msg, action, { validationBlocked: true })
    }
@@ -38,10 +38,10 @@ export const validateWriteRequest = (
          if (!parsedBody || typeof parsedBody !== "object" || Array.isArray(parsedBody))
             return block(messages.writeInvalidBody.replace("{error}", "expected a JSON object"), action, { validationBlocked: true })
          const body = parsedBody as Record<string, unknown>
-         if (body.resourceType !== def.resourceType)
+         if (body.resourceType !== def.resource)
             return block(messages.writeResourceTypeMismatch
                .replace("{actual}", String(body.resourceType ?? "missing"))
-               .replace("{expected}", def.resourceType), action, { validationBlocked: true })
+               .replace("{expected}", def.resource), action, { validationBlocked: true })
          if (action === "update" && id && body.id && body.id !== id)
             return block(messages.writeResourceTypeMismatch
                .replace("{actual}", `body.id=${body.id}`)

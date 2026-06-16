@@ -27,15 +27,15 @@ export const getConfigDir = (): string => configDir()
 /** Builds a Zod shape from search params, auto-injecting _id when needed. */
 export const buildShape = (
    params: Record<string, string>,
-   resourceType: string,
+   resource: string,
    supportsDirectRead: boolean,
 ): Record<string, z.ZodOptional<z.ZodString>> => {
    const shape: Record<string, z.ZodOptional<z.ZodString>> = Object.fromEntries(
       Object.entries(params).map(([key, desc]) => [key, z.string().optional().describe(desc)]),
    )
    if (supportsDirectRead && !shape["_id"]) {
-      shape["_id"] = z.string().optional().describe(`${resourceType} resource ID — performs direct read when provided alone`)
-      console.warn(`📋 "${resourceType}": auto-injected _id for supportsDirectRead`)
+      shape["_id"] = z.string().optional().describe(`${resource} resource ID — performs direct read when provided alone`)
+      console.warn(`📋 "${resource}": auto-injected _id for supportsDirectRead`)
    }
    return shape
 }
@@ -67,14 +67,14 @@ const parse = (): DefinitionsSnapshot => {
 
          const params = entry.searchParams ?? {}
          return {
-            resourceType: entry.resourceType,
+            resource: entry.resource,
             toolName: entry.toolName,
             description: entry.description,
             supportsDirectRead: entry.supportsDirectRead,
             requireOneOf: entry.requireOneOf,
             requireCombination: entry.requireCombination,
             searchParams: params,
-            searchSchema: z.object(buildShape(params, entry.resourceType, entry.supportsDirectRead)),
+            searchSchema: z.object(buildShape(params, entry.resource, entry.supportsDirectRead)),
          }
       }),
       scopes = definitions.map((d) => {
@@ -85,7 +85,7 @@ const parse = (): DefinitionsSnapshot => {
             config.writeCapabilities.has("delete") ? "d" : "",
             "s",
          ].join("")
-         return `system/${d.resourceType}.${letters}`
+         return `system/${d.resource}.${letters}`
       })
    return { definitions, scopes, searchControls }
 }

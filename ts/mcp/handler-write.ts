@@ -20,25 +20,25 @@ export const executeWrite = async (
    parsedBody?: unknown,
 ): Promise<{ content: { type: "text"; text: string }[]; isError?: true }> => {
    const
-      logTag = `${def.resourceType}.${op[0].toUpperCase()}${op.slice(1)}`,
+      logTag = `${def.resource}.${op[0].toUpperCase()}${op.slice(1)}`,
       id = typeof args["_id"] === "string" && args["_id"] ? args["_id"] : undefined,
       body = parsedBody ?? (typeof args["body"] === "string" ? JSON.parse(args["body"]) : undefined)
 
    try {
       const
          client = createFhirClient(),
-         result = await withRetry(`${def.resourceType} ${op}`, () => {
+         result = await withRetry(`${def.resource} ${op}`, () => {
             if (op === "create") return client.create(body)
             if (op === "update") return client.update(body)
-            if (op === "delete") return client.delete(`${def.resourceType}/${id}`)
+            if (op === "delete") return client.delete(`${def.resource}/${id}`)
             // patch
-            return client.patch(`${def.resourceType}/${id}`, body)
+            return client.patch(`${def.resource}/${id}`, body)
          }, 3, config.fhirRequestTimeoutMs),
          json = result ? JSON.stringify(result, null, 2) : `${op} succeeded`
 
       config.debug && console.log(`🔥 ${logTag} OK`)
       emitAudit({
-         ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType,
+         ts: new Date().toISOString(), tool: toolName, resource: def.resource,
          operation: op, status: "ok", durationMs: auditTime(t0), httpStatus: 200,
          jsonBytes: Buffer.byteLength(json, "utf8"),
       })
@@ -47,7 +47,7 @@ export const executeWrite = async (
       const { log, client } = formatFhirError(err)
       console.error(`🔴 ${logTag} ERR ${log}`)
       emitAudit({
-         ts: new Date().toISOString(), tool: toolName, resourceType: def.resourceType,
+         ts: new Date().toISOString(), tool: toolName, resource: def.resource,
          operation: op, status: "error", durationMs: auditTime(t0), httpStatus: errorStatus(err),
       })
       return { content: [{ type: "text" as const, text: client }], isError: true }
