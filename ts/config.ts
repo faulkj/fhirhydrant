@@ -6,6 +6,8 @@ import {
 } from "./config-parsers.ts"
 
 /** Validated runtime configuration loaded from environment variables. */
+const { activeKey, retiredKeys } = parseKeys()
+
 export const config: Config = {
    fhirBaseUrl: get("FHIR_BASE_URL").replace(/\/$/, ""),
    fhirVersion: parseFhirVersion(),
@@ -16,8 +18,8 @@ export const config: Config = {
       return opt("FHIR_TOKEN_URL") ?? `${this.fhirBaseUrl}/oauth2/token`
    },
    fhirClientId: get("FHIR_CLIENT_ID"),
-   fhirKeys: parseKeys(),
-   fhirActiveKey: get("FHIR_ACTIVE_KEY"),
+   fhirActiveKey: activeKey,
+   fhirRetiredKeys: retiredKeys,
    fhirJwksUrl: opt("FHIR_JWKS_URL"),
    port: parsePort(),
    bindHost: opt("BIND_HOST") ?? "127.0.0.1",
@@ -39,10 +41,9 @@ export const config: Config = {
    operations: parseOperations(),
 }
 
-if (!config.fhirKeys.some((k) => k.kid === config.fhirActiveKey))
-   throw new Error(
-      `FHIR_ACTIVE_KEY="${config.fhirActiveKey}" does not match any derived kid — available: ${config.fhirKeys.map((k) => k.kid).join(", ")}`,
-   )
+console.log(`🔑 Active kid: ${config.fhirActiveKey.kid}`)
+if (retiredKeys.length)
+   console.log(`🔑 JWKS: ${1 + retiredKeys.length} keys`)
 
 if (config.debug && process.env["NODE_ENV"]?.trim().toLowerCase() === "production")
    throw new Error(

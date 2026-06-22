@@ -4,11 +4,11 @@ type WriteAction = "create" | "update" | "patch" | "delete"
 /** All possible action values a resource tool can execute. */
 type ToolAction = "search" | "read" | WriteAction
 
-/** A private key and its derived kid (from PEM filename). */
+/** A private key and its derived kid. */
 interface KeyPair {
-   /** Key identifier derived from the PEM filename: private-<kid>.pem → kid. */
+   /** RFC 7638 JWK Thumbprint (first 12 base64url chars of SHA-256). */
    kid: string
-   /** PEM file path as provided in FHIR_PRIVATE_KEY. */
+   /** Raw RSA PKCS#8 PEM content. */
    privateKey: string
 }
 
@@ -28,8 +28,8 @@ interface Config {
    readonly fhirServerUrl: string
    readonly fhirTokenEndpoint: string
    fhirClientId: string
-   fhirKeys: KeyPair[]
-   fhirActiveKey: string
+   fhirActiveKey: KeyPair
+   fhirRetiredKeys: KeyPair[]
    fhirJwksUrl: string | undefined
    port: number
    bindHost: string

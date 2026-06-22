@@ -1,32 +1,15 @@
-import FHIRStarter from "fhirstarterjs"
+import { createPrivateKey, createPublicKey } from "node:crypto"
 import { config } from "../../config.ts"
-import { getRequestedScopes } from "../model/definitions.ts"
 
-/** Builds the JWKS document dynamically from all configured private keys. */
-const buildJwks = async (): Promise<string> => {
-   const keys = await Promise.all(
-      config.fhirKeys.map(async ({ kid, privateKey }) => {
-         const
-            starter = new FHIRStarter({
-               clientId: config.fhirClientId,
-               privateKey,
-               tokenEndpointUrl: config.fhirTokenEndpoint,
-               scopes: getRequestedScopes(),
-               keyId: kid,
-            }),
-            jwks = await starter.getJwks()
-         return jwks.keys[0]
-      }),
-   )
-   return JSON.stringify({ keys })
-}
+/** Cached JWKS JSON built once at module load from all configured keys. */
+const jwksJson: string = JSON.stringify({
+   keys: [config.fhirActiveKey, ...config.fhirRetiredKeys].map(({ kid, privateKey }) => {
+      const pub = createPublicKey(createPrivateKey(privateKey)).export({ format: "jwk" }) as Record<string, unknown>
+      return { ...pub, kid, alg: "RS384", use: "sig" }
+   }),
+})
 
-/** Express GET handler that dynamically serves the JWKS document. */
-export const jwksHandler = async (_req: Req, res: Res): Promise<void> => {
-   try {
-      res.type("application/json").send(await buildJwks())
-   } catch (err) {
-      console.error("🔑 Failed to build JWKS:", err instanceof Error ? err.message : err)
-      res.status(500).json({ error: "Failed to build JWKS" })
-   }
+/** Express GET handler that serves the cached JWKS document. */
+export const jwksHandler = (_req: Req, res: Res): void => {
+   res.set("Cache-Control", "public, max-age=3600").type("application/json").send(jwksJson)
 }

@@ -1,19 +1,17 @@
-import FHIRStarter from "fhirstarterjs"
+import fhirStarter from "fhirstarterjs"
 import { config } from "../../config.ts"
 import { getRequestedScopes } from "../model/definitions.ts"
 
-let starter!: InstanceType<typeof FHIRStarter>
+let starter!: InstanceType<typeof fhirStarter>
 
-const activeKey = config.fhirKeys.find((k) => k.kid === config.fhirActiveKey)!
-
-/** Initialises FHIRStarter and acquires the first access token. Call once at startup. */
+/** Initialises fhirStarter and acquires the first access token. Call once at startup. */
 export const startAuth = async (): Promise<void> => {
-   starter = new FHIRStarter({
+   starter = new fhirStarter({
       clientId: config.fhirClientId,
-      privateKey: activeKey.privateKey,
+      privateKey: config.fhirActiveKey.privateKey,
       tokenEndpointUrl: config.fhirTokenEndpoint,
       scopes: getRequestedScopes(),
-      keyId: activeKey.kid,
+      keyId: config.fhirActiveKey.kid,
       ...(config.fhirJwksUrl && { jwksUrl: config.fhirJwksUrl }),
    })
    await starter.start()
@@ -31,7 +29,7 @@ export const stopAuth = (): void => {
    starter?.stop()
 }
 
-/** Stops then restarts FHIRStarter with the current scopes. Use when definitions change the derived scope set. */
+/** Stops then restarts fhirStarter with the current scopes. Use when definitions change the derived scope set. */
 export const restartAuth = async (): Promise<void> => {
    stopAuth()
    await startAuth()

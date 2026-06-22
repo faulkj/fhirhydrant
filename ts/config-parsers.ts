@@ -1,4 +1,4 @@
-import { basename } from "node:path"
+import fhirStarter from "fhirstarterjs"
 
 const VALID_FHIR_VERSIONS = new Set<FhirVersion>(["R4", "R4B", "R5"])
 
@@ -118,29 +118,39 @@ export const parseAuditSinks = (): AuditSinkName[] => {
    return good
 }
 
-/** Parses FHIR_PRIVATE_KEY into key pairs, with kid derived from each PEM filename. */
-export const parseKeys = (): KeyPair[] => {
+const
+   /** Decodes a base64-encoded PEM value into PEM text. */
+   decodePem = (raw: string): string =>
+      Buffer.from(raw.replace(/\s/g, ""), "base64").toString("utf-8").trim(),
+
+   /** Derives a 12-char kid from a full JWK Thumbprint. */
+   deriveKid = (pem: string): string =>
+      fhirStarter.thumbprint(pem).slice(0, 12),
+
+   /** Wraps key parsing with a contextual error message. */
+   parseKey = (pem: string, envVar: string): KeyPair => {
+      try {
+         return { kid: deriveKid(pem), privateKey: pem }
+      } catch (e) {
+         throw new Error(`${envVar}: ${(e as Error).message} — ensure the value is a base64-encoded RSA PKCS#8 PEM`)
+      }
+   }
+
+/** Parses FHIR_ACTIVE_KEY and optional FHIR_RETIRED_KEYS into key pairs with thumbprint-derived kids. */
+export const parseKeys = (): { activeKey: KeyPair, retiredKeys: KeyPair[] } => {
    const
-      raw = get("FHIR_PRIVATE_KEY"),
-      paths = raw.split(",").map((s) => s.trim()).filter(Boolean)
-   if (!paths.length)
-      throw new Error("FHIR_PRIVATE_KEY must contain at least one PEM file path")
-   const
-      keys = paths.map((p) => {
-         const
-            name = basename(p),
-            match = /^private-(.+)\.pem$/i.exec(name)
-         if (!match)
-            throw new Error(
-               `Invalid PEM filename "${name}" — must match private-<kid>.pem (e.g. private-20260610.pem)`,
-            )
-         return { kid: match[1], privateKey: p }
-      }),
-      kids = new Set<string>()
-   for (const { kid } of keys) {
+      activePem = decodePem(get("FHIR_ACTIVE_KEY")),
+      activeKey = parseKey(activePem, "FHIR_ACTIVE_KEY"),
+      rawRetired = opt("FHIR_RETIRED_KEYS"),
+      retiredKeys: KeyPair[] = rawRetired
+         ? rawRetired.split(",").map((s) => s.trim()).filter(Boolean)
+            .map((b64, i) => parseKey(decodePem(b64), `FHIR_RETIRED_KEYS[${i + 1}]`))
+         : [],
+      kids = new Set<string>([activeKey.kid])
+   for (const { kid } of retiredKeys) {
       if (kids.has(kid))
-         throw new Error(`Duplicate kid "${kid}" — each PEM file must derive a unique kid`)
+         throw new Error(`Duplicate derived kid "${kid}" — the same key appears in both FHIR_ACTIVE_KEY and FHIR_RETIRED_KEYS`)
       kids.add(kid)
    }
-   return keys
+   return { activeKey, retiredKeys }
 }

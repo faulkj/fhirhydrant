@@ -85,8 +85,7 @@ For desktop MCP clients, stdio is usually the simplest transport:
             "MCP_TRANSPORT": "stdio",
             "FHIR_BASE_URL": "https://fhir.example.org",
             "FHIR_CLIENT_ID": "your-client-id",
-            "FHIR_PRIVATE_KEY": "private-20260610.pem",
-            "FHIR_ACTIVE_KEY": "20260610",
+            "FHIR_ACTIVE_KEY": "LS0tLS1CRUdJTi...base64-of-your-pem...",
             "FHIR_JWKS_URL": "https://example.org/.well-known/jwks.json"
          }
       }
@@ -94,8 +93,9 @@ For desktop MCP clients, stdio is usually the simplest transport:
 }
 ```
 
-`FHIR_PRIVATE_KEY` is a comma-separated list of PEM file paths. Each `kid` is
-derived from the filename: `private-<kid>.pem`.
+`FHIR_ACTIVE_KEY` is your RSA PKCS#8 private key, base64-encoded. The `kid` is
+derived automatically at startup via a truncated JWK Thumbprint and logged to
+the console.
 
 ## Tools
 
@@ -239,15 +239,22 @@ fhirHydrant uses SMART Backend Services: client credentials plus a signed JWT
 assertion. This is backend FHIR access, not browser-based SMART standalone
 launch; there is no interactive redirect/login flow in the MCP path.
 
-Private keys come from `FHIR_PRIVATE_KEY`; `FHIR_ACTIVE_KEY` chooses the signer.
-In HTTP mode, the built-in `/jwks` endpoint exposes public keys for all
-configured private keys when `FHIR_JWKS_URL` is unset.
+`FHIR_ACTIVE_KEY` holds the raw RSA PKCS#8 signing key. In HTTP mode, the
+built-in `/jwks` endpoint exposes public keys for the active key plus any
+retired keys when `FHIR_JWKS_URL` is unset. The `kid` for each key is derived
+automatically via a truncated RFC 7638 JWK Thumbprint (first 12 base64url chars
+of SHA-256 over canonical RSA public JWK members) and logged at startup.
 
-Key rotation is additive: generate a new `private-<kid>.pem`, add it to
-`FHIR_PRIVATE_KEY`, redeploy so JWKS includes both keys, set
-`FHIR_ACTIVE_KEY` to the new kid, redeploy, then remove the old key after
-auth-server caches and old deployments have expired. If using external JWKS,
-publish the new public key before switching `FHIR_ACTIVE_KEY`.
+Key rotation workflow:
+1. Generate a new RSA key.
+2. Add the new PEM to `FHIR_RETIRED_KEYS` and redeploy so JWKS includes both.
+3. Register the new kid (logged at startup) with your auth server.
+4. Move the new PEM to `FHIR_ACTIVE_KEY` and move the old PEM to
+   `FHIR_RETIRED_KEYS`. Redeploy.
+5. After auth-server caches expire, remove the old key from `FHIR_RETIRED_KEYS`.
+
+If using external JWKS, publish the new public key before switching
+`FHIR_ACTIVE_KEY`.
 
 ## Environment Variables
 
@@ -259,13 +266,13 @@ See [.env.example](.env.example) for a complete sample.
 | --- | --- |
 | `FHIR_BASE_URL` | Base URL used to derive the FHIR server URL and token URL |
 | `FHIR_CLIENT_ID` | SMART Backend Services client ID |
-| `FHIR_PRIVATE_KEY` | Comma-separated PEM paths; `kid` is derived from `private-<kid>.pem` |
-| `FHIR_ACTIVE_KEY` | Which derived `kid` signs JWT assertions |
+| `FHIR_ACTIVE_KEY` | Base64-encoded RSA PKCS#8 PEM signing key |
 
 ### Optional
 
 | Variable | Default | Description |
 | --- | --- | --- |
+| `FHIR_RETIRED_KEYS` | unset | Comma-separated base64-encoded PEMs for JWKS rotation |
 | `FHIR_VERSION` | `R4` | Active R4+ FHIR release; controls derived URL, FHIRPath model, and compact model metadata |
 | `FHIR_SERVER_URL` | `<base>/api/FHIR/<FHIR_VERSION>` | Explicit FHIR API URL override |
 | `FHIR_TOKEN_URL` | `<base>/oauth2/token` | Explicit token endpoint override |
