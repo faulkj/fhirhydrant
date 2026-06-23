@@ -242,24 +242,23 @@
    {
       "resource": "List",
       "toolName": "list",
-      "description": "Search for or read a FHIR List resource — a curated collection of resources such as medication lists, allergy lists, or problem lists. For direct read, provide _id alone. For search, provide patient, subject, identifier, encounter, item, or source. Use code to identify list purpose.",
+      "description": "Search for or read a FHIR List resource — a curated collection of resources. For direct read, provide _id alone. For search, code is ALWAYS required along with a scoping param. Use code=problems + patient for the problem list, code=medications + patient (+ optionally encounter) for medication reconciliation lists, code=pedigree-list + patient for family history, or code=patients + identifier (system|id format) for patient lists.",
       "supportsDirectRead": true,
       "searchParams": {
          "_id": "List resource ID — performs direct read when provided alone",
-         "code": "Purpose of the list (e.g. allergy list, medication list)",
+         "code": "REQUIRED — type of list: problems, medications, pedigree-list, or patients",
          "date": "When the list was prepared",
          "empty-reason": "Why the list is empty",
-         "encounter": "Encounter context",
-         "identifier": "Business identifier",
+         "encounter": "Encounter context (for medication lists)",
+         "identifier": "Business identifier in system|value format (for patient lists)",
          "item": "Reference to an actual entry in the list",
-         "notes": "Comments about the list",
-         "patient": "Patient the list is about",
+         "patient": "Patient FHIR ID",
          "source": "Who authored the list",
          "status": "Status: current, retired, entered-in-error",
          "subject": "Subject of the list (Patient or Group)",
          "title": "Descriptive name of the list"
       },
-      "requireOneOf": ["patient", "subject", "identifier", "encounter", "item", "source"]
+      "requireCombination": [["code", "patient"], ["code", "subject"], ["code", "identifier"], ["code", "encounter"]]
    },
    {
       "resource": "Location",
@@ -304,29 +303,6 @@
          "status": "Medication status: active, inactive, entered-in-error"
       },
       "requireOneOf": ["code", "identifier", "ingredient", "ingredient-code", "lot-number", "manufacturer"]
-   },
-   {
-      "resource": "MedicationAdministration",
-      "toolName": "medicationadministration",
-      "description": "Search for or read a FHIR MedicationAdministration resource recording actual medication administrations to a patient (pills taken, injections given, IV infusions). For direct read, provide _id alone. For search, provide patient, subject, identifier, or context. Use status to filter completed, in-progress, or not-done. Use effective-time for date filtering.",
-      "supportsDirectRead": true,
-      "searchParams": {
-         "_id": "MedicationAdministration resource ID — performs direct read when provided alone",
-         "code": "Medication code (when coded as CodeableConcept)",
-         "context": "Encounter or EpisodeOfCare during which the administration took place",
-         "device": "Device used to administer the medication",
-         "effective-time": "Date/time the administration happened (or did not happen)",
-         "identifier": "Business identifier",
-         "medication": "Medication reference (when medication is a Reference)",
-         "patient": "Patient resource ID or reference",
-         "performer": "Who administered the medication (Practitioner, Device, Patient, RelatedPerson)",
-         "reason-given": "Coded reason the medication was administered",
-         "reason-not-given": "Coded reason the medication was not administered",
-         "request": "MedicationRequest that authorized this administration",
-         "status": "Status: in-progress, not-done, on-hold, completed, entered-in-error, stopped, unknown",
-         "subject": "Subject of the administration (Patient or Group)"
-      },
-      "requireOneOf": ["patient", "subject", "identifier", "context"]
    },
    {
       "resource": "MedicationDispense",
