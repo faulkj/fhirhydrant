@@ -306,6 +306,54 @@
       "requireOneOf": ["code", "identifier", "ingredient", "ingredient-code", "lot-number", "manufacturer"]
    },
    {
+      "resource": "MedicationAdministration",
+      "toolName": "medicationadministration",
+      "description": "Search for or read a FHIR MedicationAdministration resource recording actual medication administrations to a patient (pills taken, injections given, IV infusions). For direct read, provide _id alone. For search, provide patient, subject, identifier, or context. Use status to filter completed, in-progress, or not-done. Use effective-time for date filtering.",
+      "supportsDirectRead": true,
+      "searchParams": {
+         "_id": "MedicationAdministration resource ID — performs direct read when provided alone",
+         "code": "Medication code (when coded as CodeableConcept)",
+         "context": "Encounter or EpisodeOfCare during which the administration took place",
+         "device": "Device used to administer the medication",
+         "effective-time": "Date/time the administration happened (or did not happen)",
+         "identifier": "Business identifier",
+         "medication": "Medication reference (when medication is a Reference)",
+         "patient": "Patient resource ID or reference",
+         "performer": "Who administered the medication (Practitioner, Device, Patient, RelatedPerson)",
+         "reason-given": "Coded reason the medication was administered",
+         "reason-not-given": "Coded reason the medication was not administered",
+         "request": "MedicationRequest that authorized this administration",
+         "status": "Status: in-progress, not-done, on-hold, completed, entered-in-error, stopped, unknown",
+         "subject": "Subject of the administration (Patient or Group)"
+      },
+      "requireOneOf": ["patient", "subject", "identifier", "context"]
+   },
+   {
+      "resource": "MedicationDispense",
+      "toolName": "medicationdispense",
+      "description": "Search for or read a FHIR MedicationDispense resource recording pharmacy dispensing events (outpatient pickups, inpatient ward stock, single-dose issues). For direct read, provide _id alone. For search, provide patient, subject, identifier, or context. Use status to filter completed, in-progress, or cancelled. Use whenhandedover or whenprepared for date filtering.",
+      "supportsDirectRead": true,
+      "searchParams": {
+         "_id": "MedicationDispense resource ID — performs direct read when provided alone",
+         "code": "Medication code (when coded as CodeableConcept)",
+         "context": "Encounter or EpisodeOfCare associated with the dispense",
+         "destination": "Location where the medication was sent",
+         "identifier": "Business identifier",
+         "medication": "Medication reference (when medication is a Reference)",
+         "patient": "Patient resource ID or reference",
+         "performer": "Who performed the dispense (Practitioner, Organization, Device)",
+         "prescription": "MedicationRequest that authorized this dispense",
+         "receiver": "Who collected the medication (Patient or Practitioner)",
+         "responsibleparty": "Responsible party for substitution (Practitioner)",
+         "status": "Status: preparation, in-progress, cancelled, on-hold, completed, entered-in-error, stopped, declined, unknown",
+         "subject": "Subject of the dispense (Patient or Group)",
+         "type": "Type of dispense (trial fill, partial fill, emergency fill, etc.)",
+         "whenhandedover": "Date the medication was given to the patient",
+         "whenprepared": "Date the medication was packaged and reviewed"
+      },
+      "requireOneOf": ["patient", "subject", "identifier", "context"]
+   },
+   {
       "resource": "MedicationRequest",
       "toolName": "medicationrequest",
       "description": "Search for or read a FHIR MedicationRequest resource (prescriptions and medication orders). For direct read, provide _id alone. For search, provide patient, subject, identifier, encounter, or requester. Filter by status (active, completed, stopped) or intent (order, plan, proposal).",
