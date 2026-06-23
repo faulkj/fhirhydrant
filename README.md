@@ -279,7 +279,7 @@ See [.env.example](.env.example) for a complete sample.
 | `FHIR_JWKS_URL` | unset | External JWKS URL. Omit in HTTP mode to enable built-in `/jwks` |
 | `MCP_TRANSPORT` | `http` | `http` or `stdio` |
 | `PORT` | `5000` | HTTP listener port |
-| `BIND_HOST` | `127.0.0.1` | HTTP bind address |
+| `BIND_HOST` | `0.0.0.0` (or `127.0.0.1` when `NODE_ENV=development`) | HTTP bind address |
 | `ALLOWED_HOSTS` | unset | Comma-separated hostnames for DNS rebinding protection |
 | `FHIR_METADATA_MODE` | `strict` | `strict`, `warn`, or `off` for `/metadata` validation |
 | `FHIR_DEFAULT_COUNT` | `20` | Default `_count` injected into searches when allowed |

@@ -1,6 +1,6 @@
 {
    "name": "fhirhydrant",
-   "version": "0.7.0",
+   "version": "0.7.1",
    "description": "Node.js FHIR MCP server with SMART Backend Services, metadata-aware search/CRUD tools, compact responses, and FHIRPath filtering.",
    "author": "Joshua Faulkenberry <j@joshuafaulkenberry.com> (https://joshuafaulkenberry.com/)",
    "license": "SEE LICENSE IN LICENSE.md",

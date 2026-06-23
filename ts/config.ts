@@ -22,7 +22,7 @@ export const config: Config = {
    fhirRetiredKeys: retiredKeys,
    fhirJwksUrl: opt("FHIR_JWKS_URL"),
    port: parsePort(),
-   bindHost: opt("BIND_HOST") ?? "127.0.0.1",
+   bindHost: opt("BIND_HOST") ?? (process.env["NODE_ENV"] === "development" ? "127.0.0.1" : "0.0.0.0"),
    allowedHosts: parseAllowedHosts(),
    transport: parseTransport(),
    debug: opt("DEBUG")?.toLowerCase() === "true",
