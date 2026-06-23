@@ -2,7 +2,7 @@
    {
       "resource": "AdverseEvent",
       "toolName": "adverseevent",
-      "description": "Search for or read a FHIR AdverseEvent resource tracking harmful or potentially harmful healthcare events. For direct read, provide _id alone. For search, provide subject + study together, subject + research-subject, or research-subject alone. All ID values are raw FHIR IDs (not prefixed with resource type). Use seriousness to filter Serious vs Non-Serious, actuality to distinguish actual vs potential.",
+      "description": "Search for or read a FHIR AdverseEvent resource tracking harmful events in research contexts. For direct read, provide _id alone. IMPORTANT: Patient-only search is NOT supported — you MUST provide subject + study together, subject + research-subject, or research-subject alone. Do NOT attempt this resource unless you have a ResearchStudy or ResearchSubject FHIR ID. All ID values are raw FHIR IDs (not prefixed with resource type).",
       "supportsDirectRead": true,
       "searchParams": {
          "_id": "AdverseEvent resource ID — performs direct read when provided alone",
