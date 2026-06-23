@@ -43,6 +43,13 @@ export const startHttp = async (): Promise<TransportHandle> => {
    } else
       console.info("🔑 External JWKS URL configured — /jwks disabled")
 
+   app.use("/mcp", (req: Req, res: Res, next: Next) => {
+      applyMcpCors(req, res)
+      if (req.method === "OPTIONS")
+         return void res.status(204).end()
+      next()
+   })
+
    // GET opens a server→client notification stream — not supported in stateless mode
    app.get("/mcp", (_req: Req, res: Res) => res.status(405).json({ error: "Server-initiated streams not supported in stateless mode" }))
 
@@ -93,3 +100,35 @@ export const startHttp = async (): Promise<TransportHandle> => {
          }),
    }
 }
+
+const
+   corsAllowedOrigins = new Set([
+      "https://chatgpt.com",
+      "https://chat.openai.com",
+   ]),
+   corsAllowedHeaders = [
+      "Content-Type",
+      "Authorization",
+      "Cache-Control",
+      "Accept",
+      "MCP-Protocol-Version",
+      "Mcp-Session-Id",
+      "mcp-session-id",
+   ].join(", "),
+   corsExposedHeaders = [
+      "mcp-session-id",
+      "x-session-id",
+      "MCP-Session-Id",
+   ].join(", "),
+
+   applyMcpCors = (req: Req, res: Res) => {
+      const origin = req.get("origin")
+      if (origin && corsAllowedOrigins.has(origin)) {
+         res.setHeader("Access-Control-Allow-Origin", origin)
+         res.setHeader("Access-Control-Allow-Credentials", "true")
+         res.vary("Origin")
+      }
+      res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,POST,OPTIONS")
+      res.setHeader("Access-Control-Allow-Headers", corsAllowedHeaders)
+      res.setHeader("Access-Control-Expose-Headers", corsExposedHeaders)
+   }
