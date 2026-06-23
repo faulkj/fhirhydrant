@@ -113,6 +113,7 @@ export const validateOperateArgs = (
       return err(messages.operationMissingId.replace("{operation}", op.operation))
 
    for (const [k, def] of Object.entries(op.params)) {
+      if (def.default != null && params[k] == null) params[k] = def.default
       if (!def.optional && params[k] == null)
          return err(messages.operationMissingRequiredParam
             .replace("{operation}", op.operation)

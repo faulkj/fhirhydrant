@@ -153,7 +153,7 @@
       "resource": "Patient",
       "level": ["type"],
       "method": "POST",
-      "description": "Find patient records matching demographics. Body MUST be a FHIR Parameters resource containing EXACTLY two parameters: (1) name='resource' with a Patient resource containing demographics (name, birthDate, gender, telecom, address), and (2) name='onlyCertainMatches' with valueBoolean=true (REQUIRED — omitting this causes 400). Do NOT put onlyCertainMatches in query params. Full body template: {\"resourceType\":\"Parameters\",\"parameter\":[{\"name\":\"resource\",\"resource\":{\"resourceType\":\"Patient\",\"name\":[{\"family\":\"Smith\",\"given\":[\"John\"]}],\"birthDate\":\"1990-01-01\"}},{\"name\":\"onlyCertainMatches\",\"valueBoolean\":true}]}",
+      "description": "Find patient records matching demographics. Body MUST be a FHIR Parameters resource with a 'resource' parameter containing a Patient resource with demographics (name, birthDate, gender, telecom, address). The server auto-injects 'onlyCertainMatches=true' into the body — do NOT include it yourself.",
       "params": {},
       "acceptsBody": true,
       "bundleResponse": true,

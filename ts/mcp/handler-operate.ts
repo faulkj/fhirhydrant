@@ -38,12 +38,25 @@ export const makeOperateHandler = (enabledOps: OperationDefinition[]) =>
       const logTag = `${resource}.${op.operation}`
       config.debug && console.log(`🔥 ${logTag} → ${fullUrl}`)
 
+      // $match: auto-inject onlyCertainMatches into Parameters body
+      let finalBody = body
+      if (op.key === "match" && finalBody) {
+         try {
+            const parsed = JSON.parse(finalBody)
+            if (parsed.resourceType === "Parameters" && Array.isArray(parsed.parameter)) {
+               if (!parsed.parameter.some((p: Record<string, unknown>) => p.name === "onlyCertainMatches"))
+                  parsed.parameter.push({ name: "onlyCertainMatches", valueBoolean: true })
+               finalBody = JSON.stringify(parsed)
+            }
+         } catch { /* body parse handled elsewhere */ }
+      }
+
       try {
          const
             client = createFhirClient(),
             requestOpts: { url: string; method?: string; body?: string; headers?: Record<string, string>; signal?: AbortSignal } =
                op.method === "POST"
-                  ? { url: fullUrl, method: "POST", ...(body ? { body, headers: { "Content-Type": "application/fhir+json" } } : {}) }
+                  ? { url: fullUrl, method: "POST", ...(finalBody ? { body: finalBody, headers: { "Content-Type": "application/fhir+json" } } : {}) }
                   : { url: fullUrl }
 
          const result = await withRetry(

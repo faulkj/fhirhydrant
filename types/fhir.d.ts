@@ -83,6 +83,7 @@ interface OperationParamDef {
    optional?: boolean
    description: string
    repeat?: boolean
+   default?: string | number | boolean
 }
 
 /** Raw shape of a single entry in config/operations.json. */
