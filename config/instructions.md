@@ -42,6 +42,15 @@ with that entry's `url` to fetch the next page. Repeat until no `next` link is
 present. Never construct pagination URLs manually — only use URLs returned by
 the FHIR server.
 
+In compact mode, the server automatically fetches multiple upstream FHIR pages
+and returns one consolidated compact Bundle. This means a single search or
+paginate call may already contain multiple upstream pages of entries. If the response includes
+a `next` link, call `paginate` with `responseMode=compact` to continue from
+where the server stopped. You do not need to repeatedly paginate through small
+pages — the server handles that internally. Use `maxResults` to set a target
+for how many compact entries you want back. Pass `prefetch=false` if you need
+single-page control for debugging.
+
 When the FHIR server does not support `_elements` or `_summary`, or when you
 need projection beyond what those controls offer, use the `fhirpath` parameter
 for client-side filtering. The expression is a standard FHIRPath expression

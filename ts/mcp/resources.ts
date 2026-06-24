@@ -14,7 +14,7 @@ import { readOnlyAnnotations, writeAnnotations } from "./annotations.ts"
 let registeredCount = 0
 
 const
-   LOCAL_CONTROLS = new Set(["fhirpath", ...(config.responseMode !== "compact-locked" ? ["responseMode"] : [])]),
+   LOCAL_CONTROLS = new Set(["fhirpath", "maxResults", "prefetch", ...(config.responseMode !== "compact-locked" ? ["responseMode"] : [])]),
    WRITE_WITH_BODY = new Set<ToolAction>(["create", "update", "patch"])
 
 const augmentSchema = (

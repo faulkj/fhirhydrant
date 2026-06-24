@@ -37,6 +37,11 @@ interface AuditEvent {
    compacted?: boolean
    httpStatus?: number
    timedOut?: boolean
+   prefetchPages?: number
+   prefetchEntries?: number
+   prefetchRawBytes?: number
+   prefetchTruncated?: boolean
+   prefetchTruncateReason?: string
    requestId?: string
    user?: string
 }

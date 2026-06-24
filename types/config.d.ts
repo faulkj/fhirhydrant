@@ -50,4 +50,8 @@ interface Config {
    fhirTerminologyTimeoutMs: number
    writeCapabilities: Set<WriteAction>
    operations: Set<string> | undefined
+   prefetchMaxPages: number
+   prefetchMaxEntries: number
+   prefetchMaxBytes: number
+   prefetchTimeoutMs: number
 }

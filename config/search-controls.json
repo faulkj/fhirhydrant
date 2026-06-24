@@ -6,5 +6,7 @@
    "_include": "Include referenced resources in the response Bundle (e.g. Observation:patient)",
    "_revinclude": "Include resources that reference the matched resources (e.g. Provenance:target)",
    "fhirpath": "FHIRPath expression evaluated locally against the FHIR response — use for client-side projection when _elements or _summary are unavailable or insufficient",
-   "responseMode": "Response shape: compact (token-efficient) or full (raw FHIR JSON)"
+   "responseMode": "Response shape: compact (token-efficient) or full (raw FHIR JSON)",
+   "maxResults": "Target number of compact results — server stops fetching additional pages once this threshold is reached (may slightly exceed due to whole-page fetching)",
+   "prefetch": "Set to false to disable server-side page coalescing and return a single upstream page"
 }

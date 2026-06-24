@@ -151,7 +151,11 @@ SMART v2 has no separate patch letter, so patch maps to `u`.
 skipped tools, search params, operations, and metadata notes. 
 
 `paginate` fetches one Bundle page using a server-returned `next` URL validated 
-against the FHIR origin and allowed path prefixes.
+against the FHIR origin and allowed path prefixes. When compact mode is active
+and the fetched page has more results, paginate automatically coalesces
+multiple upstream pages into one compact response (same behavior as resource
+search tools). Pass `prefetch=false` to disable coalescing and get a single
+page.
 
 ### Named Operations
 
@@ -202,6 +206,7 @@ when the FHIR server advertises them.
 | Feature | Behavior |
 | --- | --- |
 | `_count` default/cap | No `_count` injected by default (server decides page size). Set `FHIR_DEFAULT_COUNT` to inject one; `FHIR_MAX_COUNT` caps explicit caller values (0 = no cap) |
+| Page coalescing | When compact mode is active, the server fetches multiple upstream pages sequentially, compacts each immediately, and returns one consolidated Bundle. Controlled by `maxResults`, `prefetch`, and `FHIR_PREFETCH_*` env vars |
 | Byte limit | `FHIR_MAX_RESPONSE_BYTES` limits every tool response; oversized Bundles are chunked transparently |
 | Auto-retry | Oversized search Bundles attempt local chunking first, then retry with smaller `_count` as a fallback |
 | FHIRPath | `fhirpath` filters the returned FHIR JSON locally and returns matching nodes as an array |
@@ -215,6 +220,23 @@ FHIR noise and common datatypes such as `meta`, narrative, extensions,
 `CodeableReference`.
 FHIRPath runs locally; the FHIR server never sees the expression. If evaluation
 fails, the raw response is withheld and an error is returned.
+
+### Page Coalescing
+
+When compact mode is active for a search (resource tools or paginate), the
+server fetches multiple upstream FHIR pages sequentially, compacts each page
+immediately, and returns one consolidated compact Bundle. This reduces MCP
+round-trips from many "next page" calls down to one.
+
+- `maxResults` sets a target — the server stops fetching once this threshold
+  is crossed (may slightly exceed since whole pages are appended)
+- `prefetch=false` disables coalescing for one call
+- `_count` still controls the upstream FHIR page size
+- Coalescing stops at configurable page, entry, byte, and time limits
+- The Bundle's `link[next]` URL points to where the server stopped; call
+  `paginate` with `responseMode=compact` to continue
+- FHIRPath-filtered requests stay single-page (no coalescing)
+- `responseMode=full` always returns a single upstream page
 
 ## Audit Events
 
@@ -292,6 +314,10 @@ See [.env.example](.env.example) for a complete sample.
 | `FHIR_OPERATIONS` | unset | Comma-separated operation keys; `none` disables all catalog operations. Default catalog: `everything`, `lastn`, `validate`, `docref`, `expand`, `lookup`, `translate`, `summary`, `match` |
 | `FHIR_TERMINOLOGY_BASE_URL` | unset | Enables terminology tools, e.g. `https://tx.fhir.org/r4` |
 | `FHIR_PAGINATION_PATHS` | unset | Extra allowed path prefixes for pagination links, e.g. `FHIRProxy` |
+| `FHIR_PREFETCH_MAX_PAGES` | `5` | Max upstream pages fetched per coalesced compact search |
+| `FHIR_PREFETCH_MAX_ENTRIES` | `5000` | Max upstream entries accumulated before stopping |
+| `FHIR_PREFETCH_MAX_BYTES` | `2097152` | Max raw bytes fetched before stopping |
+| `FHIR_PREFETCH_TIMEOUT_MS` | `25000` | Wall-clock budget for the coalescing loop |
 | `FHIR_AUDIT_SINK` | unset | `console`, `file`, or both |
 | `FHIR_AUDIT_FILE` | `./audit.jsonl` | JSONL file used when the `file` audit sink is enabled |
 | `FHIR_AUDIT_USER_HEADER` | unset | Proxy-authenticated user header copied into audit events |
@@ -317,7 +343,7 @@ Everything in `config/` is editable without source changes.
 | --- | --- |
 | `resources.json` | FHIR resource tools, search params, direct-read behavior, and `requireOneOf` rules |
 | `operations.json` | Named operation catalog for `operate` |
-| `search-controls.json` | Descriptions for `_count`, `_sort`, `_summary`, `_elements`, `_include`, `_revinclude`, `fhirpath`, and `responseMode` |
+| `search-controls.json` | Descriptions for `_count`, `_sort`, `_summary`, `_elements`, `_include`, `_revinclude`, `fhirpath`, `responseMode`, `maxResults`, and `prefetch` |
 | `instructions.md` | MCP server instructions shown to the client/model |
 | `messages.json` | User-facing messages, errors, and response notes |
 | `core-tools.json` | Built-in tool descriptions and param hints |

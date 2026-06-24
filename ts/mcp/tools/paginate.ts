@@ -9,6 +9,7 @@ import { responseNote, bundleStats } from "../../fhir/transform/response-notes.t
 import { extractFhirPath, applyFhirPath } from "../../fhir/transform/fhirpath.ts"
 import { extractResponseMode, resolveResponseMode, compact } from "../../fhir/transform/compact.ts"
 import { isChunkUrl, retrieveChunk, tryChunkBundle } from "../../fhir/transform/bundle-chunks.ts"
+import { coalesce, extractMaxResults, extractPrefetch } from "../../fhir/transform/coalesce.ts"
 import { validatePageUrl } from "./validate-page-url.ts"
 import { readOnlyAnnotations } from "../annotations.ts"
 
@@ -23,6 +24,8 @@ export const addPaginate = (
          const
             fhirpathExpr = extractFhirPath(args),
             explicit = extractResponseMode(args),
+            maxResults = extractMaxResults(args),
+            prefetchEnabled = extractPrefetch(args),
             t0 = Date.now(),
             resolved = resolveResponseMode(explicit)
          if (!resolved)
@@ -51,6 +54,26 @@ export const addPaginate = (
                3,
                config.fhirRequestTimeoutMs,
             )
+
+            // Coalesce: compact multi-page fetch when conditions are met
+            if (effectiveMode === "compact" && prefetchEnabled && !fhirpathExpr) {
+               const r = result as Record<string, unknown>
+               if (r.resourceType === "Bundle" && Array.isArray(r.link) &&
+                  (r.link as Record<string, unknown>[]).some((l) => l?.relation === "next" && typeof l?.url === "string")) {
+                  const c = await coalesce(result, client, "paginate", maxResults, t0)
+                  console.log(`\u{1F7E2} Paginate OK (coalesced ${c.pagesFetched} pages)`)
+                  emitAudit({
+                     ts: new Date().toISOString(), tool: "paginate", operation: "paginate",
+                     status: c.isError ? "truncated" : "ok", durationMs: auditTime(t0), httpStatus: 200,
+                     prefetchPages: c.pagesFetched, prefetchEntries: c.entriesReturned,
+                     prefetchRawBytes: c.rawBytes, prefetchTruncated: c.truncated || undefined,
+                     ...(c.truncateReason && { prefetchTruncateReason: c.truncateReason }),
+                     responseMode: effectiveMode, compacted: true,
+                  })
+                  return { content: [{ type: "text" as const, text: c.text }], ...(c.isError && { isError: true }) }
+               }
+            }
+
             let json = JSON.stringify(result, null, 2), filtered = false, matchCount = 0, compacted = false
             const
                stats = bundleStats(result, json),

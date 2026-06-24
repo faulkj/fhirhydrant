@@ -12,6 +12,7 @@ import { checkRuntimeCapability } from "./validation.ts"
 import { extractFhirPath, applyFhirPath } from "../fhir/transform/fhirpath.ts"
 import { extractResponseMode, resolveResponseMode, compact } from "../fhir/transform/compact.ts"
 import { tryChunkBundle } from "../fhir/transform/bundle-chunks.ts"
+import { coalesce, extractMaxResults, extractPrefetch } from "../fhir/transform/coalesce.ts"
 import { validateResourceRequest } from "./request-guards.ts"
 import { isWriteOp, executeWrite } from "./handler-write.ts"
 
@@ -27,6 +28,8 @@ export const makeHandler =
       const
          fhirpathExpr = extractFhirPath(args),
          explicit = extractResponseMode(args),
+         maxResults = extractMaxResults(args),
+         prefetchEnabled = extractPrefetch(args),
          t0 = Date.now(),
          guard = validateResourceRequest(def, args, toolName, t0)
       if (!guard.ok) return guard.response
@@ -67,6 +70,26 @@ export const makeHandler =
                3,
                config.fhirRequestTimeoutMs,
             )
+
+            // Coalesce: compact multi-page fetch when conditions are met
+            if (!directId && effectiveMode === "compact" && prefetchEnabled && !fhirpathExpr) {
+               const r = result as Record<string, unknown>
+               if (r.resourceType === "Bundle" && Array.isArray(r.link) &&
+                  (r.link as Record<string, unknown>[]).some((l) => l?.relation === "next" && typeof l?.url === "string")) {
+                  const c = await coalesce(result, client, logTag, maxResults, t0)
+                  console.log(`\u{1F7E2} ${logTag} OK (coalesced ${c.pagesFetched} pages)`)
+                  emitAudit({
+                     ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op,
+                     status: c.isError ? "truncated" : "ok", durationMs: auditTime(t0), httpStatus: 200,
+                     prefetchPages: c.pagesFetched, prefetchEntries: c.entriesReturned,
+                     prefetchRawBytes: c.rawBytes, prefetchTruncated: c.truncated || undefined,
+                     ...(c.truncateReason && { prefetchTruncateReason: c.truncateReason }),
+                     responseMode: effectiveMode, compacted: true,
+                  })
+                  return { content: [{ type: "text" as const, text: c.text }], ...(c.isError && { isError: true }) }
+               }
+            }
+
             json = JSON.stringify(result, null, 2)
             stats = bundleStats(result, json)
             const sourceBytes = Buffer.byteLength(json, "utf8")

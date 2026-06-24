@@ -32,3 +32,15 @@ export const responseNote = (result: unknown, json: string): string | undefined 
    ].filter(Boolean).join(" ")
    return stats.nextUrl ? `${parts}. Next: ${stats.nextUrl}` : parts
 }
+
+/** Builds a summary note for a coalesced multi-page fetch. */
+export const coalesceNote = (
+   pages: number, upstream: number, returned: number, hasMore: boolean, reason?: string,
+): string => {
+   const parts = [
+      `Prefetched ${pages} page${pages > 1 ? "s" : ""} (${upstream} upstream → ${returned} compact)`,
+      reason ? `stopped: ${reason}` : undefined,
+      hasMore ? "More available — call paginate with the next link (responseMode=compact)." : undefined,
+   ].filter(Boolean)
+   return parts.join(". ")
+}

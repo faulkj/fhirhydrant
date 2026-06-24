@@ -40,6 +40,10 @@ export const config: Config = {
    fhirTerminologyTimeoutMs: parsePositiveInt("FHIR_TERMINOLOGY_TIMEOUT_MS", 15000),
    writeCapabilities: parseWriteCapabilities(),
    operations: parseOperations(),
+   prefetchMaxPages: parsePositiveInt("FHIR_PREFETCH_MAX_PAGES", 5),
+   prefetchMaxEntries: parsePositiveInt("FHIR_PREFETCH_MAX_ENTRIES", 5000),
+   prefetchMaxBytes: parsePositiveInt("FHIR_PREFETCH_MAX_BYTES", 2097152),
+   prefetchTimeoutMs: parsePositiveInt("FHIR_PREFETCH_TIMEOUT_MS", 25000),
 }
 
 config.debug && console.log(`🔑 Active kid: ${config.fhirActiveKey.kid}`)

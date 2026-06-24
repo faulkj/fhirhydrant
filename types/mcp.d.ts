@@ -35,3 +35,15 @@ type GuardResult =
 interface ChunkBuildResult {
    text: string
 }
+
+/** Return shape from the coalescing loop — MCP-ready response plus audit stats. */
+interface CoalesceResult {
+   text: string
+   isError: boolean
+   pagesFetched: number
+   entriesSeen: number
+   entriesReturned: number
+   rawBytes: number
+   truncated: boolean
+   truncateReason?: string
+}

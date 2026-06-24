@@ -16,6 +16,16 @@
             "type": "string",
             "optional": true,
             "description": "Response shape: compact or full"
+         },
+         "maxResults": {
+            "type": "number",
+            "optional": true,
+            "description": "Target number of compact results — server stops fetching additional pages once this threshold is reached"
+         },
+         "prefetch": {
+            "type": "string",
+            "optional": true,
+            "description": "Set to false to disable server-side page coalescing"
          }
       }
    },
