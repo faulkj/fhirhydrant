@@ -38,17 +38,19 @@ export const makeOperateHandler = (enabledOps: OperationDefinition[]) =>
       const logTag = `${resource}.${op.operation}`
       config.debug && console.log(`🔥 ${logTag} → ${fullUrl}`)
 
-      // $match: auto-inject onlyCertainMatches into Parameters body
+      // $match: validate Parameters shape and auto-inject onlyCertainMatches
       let finalBody = body
       if (op.key === "match" && finalBody) {
          try {
             const parsed = JSON.parse(finalBody)
-            if (parsed.resourceType === "Parameters" && Array.isArray(parsed.parameter)) {
-               if (!parsed.parameter.some((p: Record<string, unknown>) => p.name === "onlyCertainMatches"))
-                  parsed.parameter.push({ name: "onlyCertainMatches", valueBoolean: true })
-               finalBody = JSON.stringify(parsed)
+            if (parsed.resourceType !== "Parameters" || !Array.isArray(parsed.parameter)) {
+               emitAudit({ ts: new Date().toISOString(), tool: "operate", resource, operation: op.auditOperation as AuditEvent["operation"], status: "blocked", durationMs: auditTime(t0), validationBlocked: true })
+               return { content: [{ type: "text" as const, text: "$match body must be a FHIR Parameters resource with a parameter array" }], isError: true }
             }
-         } catch { /* body parse handled elsewhere */ }
+            if (!parsed.parameter.some((p: Record<string, unknown>) => p.name === "onlyCertainMatches"))
+               parsed.parameter.push({ name: "onlyCertainMatches", valueBoolean: true })
+            finalBody = JSON.stringify(parsed)
+         } catch { /* JSON syntax errors caught by operate-guards */ }
       }
 
       try {
@@ -90,7 +92,7 @@ export const makeOperateHandler = (enabledOps: OperationDefinition[]) =>
             responseMode: pipeline.effectiveMode,
             ...(pipeline.compacted && { compacted: true }),
          })
-         return { content: [{ type: "text" as const, text: pipeline.text }] }
+         return { content: [{ type: "text" as const, text: pipeline.text }], ...(pipeline.isError && { isError: true }) }
       } catch (err) {
          const { log, client } = formatFhirError(err)
          console.error(`🔴 ${logTag} ERR ${log}`)
