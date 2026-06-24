@@ -28,7 +28,7 @@ interface TransportHandle {
 
 /** Result of resource request validation — either success (directId + op) or an early-exit MCP error response. */
 type GuardResult =
-   | { ok: true; directId: string | undefined; op: AuditEvent["operation"]; parsedBody?: unknown }
+   | { ok: true; directId: string | undefined; op: AuditEvent["operation"]; versionId?: string; parsedBody?: unknown }
    | { ok: false; response: { content: { type: "text"; text: string }[]; isError: true } }
 
 /** Result from tryChunkBundle when chunking is possible. */

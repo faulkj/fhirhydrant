@@ -5,7 +5,9 @@ import { emitAudit, auditTime } from "../audit.ts"
 import { validateDateArgs } from "./validation.ts"
 import { validateWriteRequest } from "./write-guards.ts"
 
-const WRITE_OPS = new Set<ToolAction>(["create", "update", "patch", "delete"])
+const
+   WRITE_OPS = new Set<ToolAction>(["create", "update", "patch", "delete"]),
+   FHIR_ID = /^[A-Za-z0-9\-.]{1,64}$/
 
 /**
  * Validates a resource tool request: resolves action / direct-read, then checks
@@ -23,6 +25,25 @@ export const validateResourceRequest = (
 
    // — Write action guards —
    if (action && WRITE_OPS.has(action)) return validateWriteRequest(def, args, action, block)
+
+   // — Explicit vread action —
+   if (action === "vread") {
+      const
+         id = typeof args["_id"] === "string" && args["_id"] ? args["_id"] : undefined,
+         vid = typeof args["_vid"] === "string" && args["_vid"] ? args["_vid"] : undefined
+      if (!id || !vid) return block(messages.vreadMissingVid, "vread", { validationBlocked: true })
+      if (!FHIR_ID.test(vid)) return block(messages.vreadInvalidVid.replace("{value}", vid), "vread", { validationBlocked: true })
+      return { ok: true, directId: id, versionId: vid, op: "vread" }
+   }
+
+   // — Explicit history action —
+   if (action === "history") {
+      const
+         id = typeof args["_id"] === "string" && args["_id"] ? args["_id"] : undefined,
+         dateErr = validateDateArgs(args)
+      if (dateErr) return block(dateErr, id ? "history-instance" : "history-type", { validationBlocked: true })
+      return { ok: true, directId: id, op: id ? "history-instance" : "history-type" }
+   }
 
    // — Explicit read action —
    if (action === "read") {
@@ -81,7 +102,7 @@ const
       if (!supportsDirectRead) return undefined
       const id = typeof args["_id"] === "string" && args["_id"] ? args["_id"] : undefined
       if (!id) return undefined
-      const ignore = new Set(["_id", "action", "body", ...Object.keys(getSearchControls())])
+      const ignore = new Set(["_id", "action", "body", "_vid", "_since", "_at", ...Object.keys(getSearchControls())])
       const hasExtra = Object.entries(args).some(([k, v]) => !ignore.has(k) && v !== undefined && v !== "")
       hasExtra && log.debug(`🔥 ${id}: direct read demoted to search — extra params present`)
       return hasExtra ? undefined : id

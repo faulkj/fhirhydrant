@@ -13,6 +13,10 @@ export const getEnabledActions = (
       meta = checkMeta ? getResourceMeta(def.resource) : undefined
    if (def.supportsDirectRead) actions.push("read")
    actions.push("search")
+   if (def.supportsDirectRead && (!checkMeta || meta?.interactions.has("vread")))
+      actions.push("vread")
+   if (!checkMeta || meta?.interactions.has("history-instance") || meta?.interactions.has("history-type"))
+      actions.push("history")
    for (const w of config.writeCapabilities)
       if (config.metadataMode === "off" || (checkMeta && meta?.interactions.has(writeInteraction[w])))
          actions.push(w)
@@ -39,6 +43,7 @@ export const checkRuntimeCapability = (
    def: ResourceDefinition,
    args: Record<string, unknown>,
    directId: string | undefined,
+   op?: AuditEvent["operation"],
 ): { error?: string; warning?: string } => {
    if (!isMetadataAvailable() || config.metadataMode === "off") return {}
 
@@ -47,9 +52,20 @@ export const checkRuntimeCapability = (
    if (!meta)
       return { error: messages.resourceNotAdvertised.replace("{resourceType}", def.resource) }
 
+   // Interaction-level checks for vread/history
+   if (op === "vread" && !meta.interactions.has("vread"))
+      return capResult(messages.vreadNotAdvertised.replace("{resourceType}", def.resource))
+   if (op === "history-instance" && !meta.interactions.has("history-instance"))
+      return capResult(messages.historyNotAdvertised.replace("{resourceType}", def.resource).replace("{form}", "instance"))
+   if (op === "history-type" && !meta.interactions.has("history-type"))
+      return capResult(messages.historyNotAdvertised.replace("{resourceType}", def.resource).replace("{form}", "type"))
+
+   // For read/vread/history, skip search param validation
+   if (op === "read" || op === "vread" || op === "history-instance" || op === "history-type") return {}
+
    if (!directId) {
       const
-         mcpOnly = new Set(["action", "body", "fhirpath", "responseMode"]),
+         mcpOnly = new Set(["action", "body", "fhirpath", "responseMode", "maxResults", "prefetch", "_vid", "_since", "_at"]),
          unadvertised: string[] = [], badIncludes: string[] = [], badRevIncludes: string[] = []
       for (const [key, val] of Object.entries(args)) {
          if (key === "_id" || mcpOnly.has(key)) continue
@@ -87,8 +103,13 @@ export const checkRuntimeCapability = (
 }
 
 const
-   FHIR_DATE = /^(eq|ne|gt|lt|ge|le|sa|eb|ap)?\d{4}(-\d{2}(-\d{2})?)?$/,
-   isDateParam = (name: string): boolean => name === "date" || name === "birthdate" || name.endsWith("-date"),
+   FHIR_DATE = /^(eq|ne|gt|lt|ge|le|sa|eb|ap)?\d{4}(-\d{2}(-\d{2}(T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?(Z|[+-]\d{2}:\d{2})?)?)?)?$/,
+   isDateParam = (name: string): boolean => name === "date" || name === "birthdate" || name.endsWith("-date") || name === "_since" || name === "_at",
+
+   capResult = (msg: string): { error?: string; warning?: string } =>
+      config.metadataMode === "strict"
+         ? { error: msg }
+         : { warning: msg },
 
    writeInteraction: Record<WriteAction, string> = {
       create: "create", update: "update", patch: "patch", delete: "delete"

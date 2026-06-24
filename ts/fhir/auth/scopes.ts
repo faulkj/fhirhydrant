@@ -59,10 +59,10 @@ const
 
    PERM_TO_ACTIONS: Record<ScopePermission, ToolAction[]> = {
       c: ["create"],
-      r: ["read"],
+      r: ["read", "vread", "history"],
       u: ["update", "patch"],
       d: ["delete"],
       s: ["search"],
    },
 
-   ALL_ACTIONS: Set<ToolAction> = new Set(["search", "read", "create", "update", "patch", "delete"])
+   ALL_ACTIONS: Set<ToolAction> = new Set(["search", "read", "vread", "history", "create", "update", "patch", "delete"])

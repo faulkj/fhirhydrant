@@ -42,12 +42,24 @@ const augmentSchema = (
    const
       actions = getEnabledActions(def, scopeMap),
       hasWrites = actions.some((a) => WRITE_WITH_BODY.has(a)),
+      hasVread = actions.includes("vread"),
+      hasHistory = actions.includes("history"),
       shape: Record<string, z.ZodTypeAny> = { ...buildShape(merged, def.resource, def.supportsDirectRead) }
+
+   if (hasVread) {
+      shape["_vid"] = z.string().optional().describe("Version id for vread — use with action=vread and _id")
+      injected.push("_vid")
+   }
+   if (hasHistory) {
+      shape["_since"] = z.string().optional().describe("Only include versions created at or after this date/dateTime (history)")
+      shape["_at"] = z.string().optional().describe("Only include versions current at this instant (history)")
+      injected.push("_since", "_at")
+   }
 
    if (actions.length > 1 || hasWrites) {
       shape["action"] = z.enum(actions as [string, ...string[]])
          .optional()
-         .describe(`Operation to perform: ${actions.join(", ")}. Omit for search/read (default behavior).`)
+         .describe(`Operation to perform: ${actions.join(", ")}. Omit for search/read. vread requires _id+_vid. history optionally takes _id for instance history.`)
       injected.push("action")
    }
    if (hasWrites) {

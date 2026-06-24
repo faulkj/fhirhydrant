@@ -5,7 +5,7 @@ type WriteAction = "create" | "update" | "patch" | "delete"
 type BundleType = "batch" | "transaction"
 
 /** All possible action values a resource tool can execute. */
-type ToolAction = "search" | "read" | WriteAction
+type ToolAction = "search" | "read" | "vread" | "history" | WriteAction
 
 /** A private key and its derived kid. */
 interface KeyPair {

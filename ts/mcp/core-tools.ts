@@ -5,10 +5,14 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { config } from "../config.ts"
 import { log } from "../log.ts"
+import { getSystemInteractions } from "../fhir/model/metadata.ts"
+import { getTokenResponse } from "../fhir/auth/auth.ts"
+import { parseGrantedScopes } from "../fhir/auth/scopes.ts"
 import { addPaginate } from "./tools/paginate.ts"
 import { addCapabilities } from "./tools/capabilities.ts"
 import { addTerminologyLookup } from "./tools/terminology-lookup.ts"
 import { addCodeSearch } from "./tools/code-search.ts"
+import { addSystemHistory } from "./tools/history.ts"
 
 /** Loads all core tool definitions from config/core-tools.json. */
 export const loadCoreTools = (): CoreToolDef[] =>
@@ -42,6 +46,21 @@ export const registerCoreTools = (server: McpServer): void => {
       log.debug(`📋 Terminology tools enabled (→ ${config.fhirTerminologyBaseUrl})`)
    } else
       log.debug("📋 Terminology tools disabled — FHIR_TERMINOLOGY_BASE_URL not set")
+
+   // System history: only when advertised (or metadata off) and scopes allow it
+   const
+      sysInteractions = getSystemInteractions(),
+      scopeMap = parseGrantedScopes(getTokenResponse().scope),
+      historyAllowed = (config.metadataMode === "off" || sysInteractions.has("history-system"))
+         && (scopeMap.size === 0 || scopeMap.get("*")?.has("r"))
+   if (historyAllowed) {
+      const historyParams = config.responseMode === "compact-locked"
+         ? Object.fromEntries(Object.entries(def("system_history").params).filter(([k]) => k !== "responseMode"))
+         : def("system_history").params
+      addSystemHistory(server, def("system_history").description, buildSchema(historyParams))
+      log.debug("📋 System history tool enabled")
+   } else
+      log.debug("📋 System history tool disabled — requires system history-system interaction and wildcard read scope (system/*.r)")
 }
 
 const

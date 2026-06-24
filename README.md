@@ -11,8 +11,8 @@ be expanded, trimmed, or replaced through config files without source changes.
 
 - SMART Backend Services auth with JWKS hosting, key rotation, token refresh,
   and dynamic scopes
-- Configurable resource tools for search, direct read, and optional
-  metadata-gated CRUD
+- Configurable resource tools for search, direct read, vread, history, and
+  optional metadata-gated CRUD
 - Config-driven named operations for clinical data, terminology, IPS, patient
   matching, validation, and custom workflows
 - CapabilityStatement-aware tools, search controls, operation gating, and
@@ -105,7 +105,8 @@ The exact list depends on `config/resources.json`, granted SMART scopes,
 
 | Tool or family | Available when | Purpose |
 | --- | --- | --- |
-| Resource tools | Resource is configured and allowed by metadata/scopes | Search, direct-read, and optionally CRUD FHIR resources |
+| Resource tools | Resource is configured and allowed by metadata/scopes | Search, direct-read, vread, history, and optionally CRUD FHIR resources |
+| `system_history` | Server advertises system `history` interaction and scopes allow it | Retrieve system-level change history across all resource types |
 | `capabilities` | Always registered | Inspect CapabilityStatement summary, registered tools, skipped tools, search params, operations, and metadata notes |
 | `paginate` | Always registered | Fetch the next page of a FHIR Bundle using a server-returned `next` URL |
 | `operate` | At least one named operation passes gating | Invoke configured FHIR named operations for clinical data, terminology, IPS, matching, validation, or custom workflows |
@@ -134,10 +135,19 @@ FHIR_WRITE_CAPABILITIES=create,update,patch,delete
 
 | Action | Required params | FHIR call |
 | --- | --- | --- |
+| `vread` | `_id`, `_vid` | `GET /ResourceType/{id}/_history/{vid}` |
+| `history` | `_id` (instance) or none (type) | `GET /ResourceType/{id}/_history` or `GET /ResourceType/_history` |
 | `create` | `body` | `POST /ResourceType` |
 | `update` | `_id`, `body` | `PUT /ResourceType/{id}` |
 | `patch` | `_id`, `body` | `PATCH /ResourceType/{id}` with JSON Patch |
 | `delete` | `_id` | `DELETE /ResourceType/{id}` |
+
+`vread` is available when the resource has `supportsDirectRead` and the server
+advertises the `vread` interaction. `history` is available when the server
+advertises `history-instance` or `history-type`. Both require the SMART `r`
+permission. Optional `_since` and `_at` parameters filter history results.
+History responses are Bundles and support compact mode, FHIRPath, and
+coalescing.
 
 Write bodies are validated before the FHIR call: `body.resourceType` must match
 the tool resource, `body.id` must match `_id` for update when present, and patch
@@ -195,8 +205,13 @@ returns the server's response through the standard response pipeline.
   metadata interactions. If any single entry fails, the entire Bundle is
   rejected before submission.
 
-**V1 exclusions:** Conditional requests, `_history` paths, absolute URLs, and
-`$operation` URLs inside Bundle entries are not supported.
+**V1 exclusions:** Conditional requests, system-level `_history`, absolute URLs,
+and `$operation` URLs inside Bundle entries are not supported.
+
+**History in Bundles:** `vread` (`Resource/id/_history/vid`), instance history
+(`Resource/id/_history`), and type history (`Resource/_history`) entries are
+allowed in Bundles when the server advertises the corresponding interaction and
+scopes permit it. These count as read entries.
 
 ## Metadata And Scope Gating
 

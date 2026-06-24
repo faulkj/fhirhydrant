@@ -3,13 +3,18 @@ import { log } from "../log.ts"
 import { createFhirClient } from "../fhir/auth/client.ts"
 import { withRetry, formatFhirError } from "../fhir/utils.ts"
 import { emitAudit, auditTime, errorStatus } from "../audit.ts"
+import { extractFhirPath } from "../fhir/transform/fhirpath.ts"
+import { extractResponseMode, resolveResponseMode } from "../fhir/transform/compact.ts"
 import { applyResponsePipeline } from "../fhir/transform/pipeline.ts"
 import { validateOperateArgs } from "./operate-guards.ts"
 
 /** Creates the handler function for the operate MCP tool. */
 export const makeOperateHandler = (enabledOps: OperationDefinition[]) =>
    async (args: Record<string, unknown>) => {
-      const t0 = Date.now()
+      const
+         t0 = Date.now(),
+         fhirpathExpr = extractFhirPath(args),
+         explicit = extractResponseMode(args)
       const guard = validateOperateArgs(args, enabledOps)
       if (!guard.ok) return guard.response
 
@@ -69,11 +74,16 @@ export const makeOperateHandler = (enabledOps: OperationDefinition[]) =>
             config.fhirRequestTimeoutMs,
          )
 
+         const resolved = resolveResponseMode(explicit, undefined)
+         if (!resolved) {
+            emitAudit({ ts: new Date().toISOString(), tool: "operate", resource, operation: op.auditOperation as AuditEvent["operation"], status: "error", durationMs: auditTime(t0), httpStatus: 200 })
+            return { content: [{ type: "text" as const, text: "Invalid responseMode — must be \"compact\" or \"full\"" }], isError: true }
+         }
+         const
+            { effectiveMode: rawMode, wasDefaulted } = resolved,
+            effectiveMode = op.defaultResponseMode && wasDefaulted && !config.responseMode ? op.defaultResponseMode : rawMode
          const pipeline = applyResponsePipeline({
-            args,
-            result,
-            bundleResponse: op.bundleResponse,
-            defaultMode: op.defaultResponseMode,
+            result, bundleResponse: op.bundleResponse, fhirpathExpr, effectiveMode, wasDefaulted,
          })
 
          if ("error" in pipeline) {

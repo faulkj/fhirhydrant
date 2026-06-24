@@ -97,5 +97,46 @@
             "description": "Response shape: compact or full"
          }
       }
+   },
+   {
+      "name": "system_history",
+      "description": "Retrieve system-level change history from the FHIR server. Returns a Bundle of all resource versions across all types. Only available when the server advertises the system history interaction.",
+      "params": {
+         "_since": {
+            "type": "string",
+            "optional": true,
+            "description": "Only include versions created at or after this date/dateTime"
+         },
+         "_at": {
+            "type": "string",
+            "optional": true,
+            "description": "Only include versions current at this instant"
+         },
+         "_count": {
+            "type": "number",
+            "optional": true,
+            "description": "Maximum number of history entries to return per page"
+         },
+         "fhirpath": {
+            "type": "string",
+            "optional": true,
+            "description": "FHIRPath expression evaluated locally against the response Bundle"
+         },
+         "responseMode": {
+            "type": "string",
+            "optional": true,
+            "description": "Response shape: compact or full"
+         },
+         "maxResults": {
+            "type": "number",
+            "optional": true,
+            "description": "Target number of compact results — server stops fetching additional pages once this threshold is reached"
+         },
+         "prefetch": {
+            "type": "string",
+            "optional": true,
+            "description": "Set to false to disable server-side page coalescing"
+         }
+      }
    }
 ]

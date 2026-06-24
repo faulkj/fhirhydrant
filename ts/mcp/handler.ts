@@ -1,164 +1,75 @@
 import messages from "../../config/messages.json" with { type: "json" }
-import { config } from "../config.ts"
 import { log } from "../log.ts"
 import { getDefinitions } from "../fhir/model/definitions.ts"
-import { createFhirClient } from "../fhir/auth/client.ts"
 import { getTokenResponse } from "../fhir/auth/auth.ts"
 import { parseGrantedScopes, scopeActions } from "../fhir/auth/scopes.ts"
-import { withRetry, enforceByteLimit, formatFhirError } from "../fhir/utils.ts"
-import { emitAudit, auditTime, errorStatus } from "../audit.ts"
-import { canShapeCount, buildSearchUrl, rebuildWithCount } from "../fhir/transform/shaping.ts"
-import { responseNote, bundleStats } from "../fhir/transform/response-notes.ts"
+import { emitAudit, auditTime } from "../audit.ts"
+import { canShapeCount, buildSearchUrl, buildHistoryUrl } from "../fhir/transform/shaping.ts"
 import { checkRuntimeCapability } from "./validation.ts"
-import { extractFhirPath, applyFhirPath } from "../fhir/transform/fhirpath.ts"
-import { extractResponseMode, resolveResponseMode, compact } from "../fhir/transform/compact.ts"
-import { tryChunkBundle } from "../fhir/transform/bundle-chunks.ts"
-import { coalesce, extractMaxResults, extractPrefetch } from "../fhir/transform/coalesce.ts"
 import { validateResourceRequest } from "./request-guards.ts"
 import { isWriteOp, executeWrite } from "./handler-write.ts"
+import { executeRead } from "./read-response.ts"
 
 /** Returns an async MCP tool handler bound to the given resource tool name. */
 export const makeHandler =
    (toolName: string) => async (args: Record<string, unknown>) => {
       const def = getDefinitions().find((d) => d.toolName === toolName)
       if (!def)
-         return {
-            content: [{ type: "text" as const, text: messages.toolNotFound.replace("{toolName}", toolName) }],
-            isError: true,
-         }
+         return { content: [{ type: "text" as const, text: messages.toolNotFound.replace("{toolName}", toolName) }], isError: true }
+
       const
-         fhirpathExpr = extractFhirPath(args),
-         explicit = extractResponseMode(args),
-         maxResults = extractMaxResults(args),
-         prefetchEnabled = extractPrefetch(args),
          t0 = Date.now(),
          guard = validateResourceRequest(def, args, toolName, t0)
       if (!guard.ok) return guard.response
       const { directId, op } = guard
 
-      const scopeAllowed = scopeActions(def.resource, parseGrantedScopes(getTokenResponse().scope))
-      if (!scopeAllowed.has(op as ToolAction)) {
+      // Scope check — history-instance/history-type check as ToolAction "history"
+      const
+         scopeAction = (op === "history-instance" || op === "history-type") ? "history" : op,
+         scopeAllowed = scopeActions(def.resource, parseGrantedScopes(getTokenResponse().scope))
+      if (!scopeAllowed.has(scopeAction as ToolAction)) {
          log.debug(`🔑 ${def.resource}.${op} scope blocked — not permitted by granted scopes`)
          emitAudit({ ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op, status: "blocked", durationMs: auditTime(t0), scopeBlocked: true })
          return { content: [{ type: "text" as const, text: `🔑 ${op} not permitted by granted scopes for ${def.resource}` }], isError: true }
       }
 
       if (isWriteOp(op)) return executeWrite(toolName, def, op, args, t0, guard.parsedBody)
-      const resolved = resolveResponseMode(explicit, directId)
-      if (!resolved)
-         return { content: [{ type: "text" as const, text: "Invalid responseMode — must be \"compact\" or \"full\"" }], isError: true }
-      const
-         { effectiveMode, wasDefaulted } = resolved,
-         cap = checkRuntimeCapability(def, args, directId)
+
+      // Runtime metadata check
+      const cap = checkRuntimeCapability(def, args, directId, op)
       if (cap.error) {
          log.debug(`🏥 ${def.resource}.${op} metadata blocked — ${cap.error}`)
          emitAudit({ ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op, status: "blocked", durationMs: auditTime(t0), metadataBlocked: true })
          return { content: [{ type: "text" as const, text: cap.error }], isError: true }
       }
-      const logTag = `${def.resource}.${op[0].toUpperCase()}${op.slice(1)}`
-      try {
-         const
-            shape = directId ? { allowed: false } : canShapeCount(def.resource),
-            client = createFhirClient(),
-            search = directId ? undefined : buildSearchUrl(def.resource, args, shape.allowed)
-         let url = directId ? `${def.resource}/${directId}` : search!.url, retries = 0, currentCount = 0
-         log.debug(`🔥 ${logTag} → ${url}`)
 
-         let result: unknown, json: string, stats: ReturnType<typeof bundleStats>,
-            shaped: ReturnType<typeof enforceByteLimit>, filtered = false, matchCount = 0, compacted = false
-         while (true) { // eslint-disable-line no-constant-condition
-            result = await withRetry(
-               `${def.resource} ${op}`,
-               (signal) => client.request({ url, signal }),
-               3,
-               config.fhirRequestTimeoutMs,
-            )
+      // URL selection
+      const
+         isSingle = op === "read" || op === "vread",
+         since = typeof args["_since"] === "string" && args["_since"] ? args["_since"] : undefined,
+         at = typeof args["_at"] === "string" && args["_at"] ? args["_at"] : undefined,
+         count = args["_count"] != null ? Number(args["_count"]) : undefined
 
-            // Coalesce: compact multi-page fetch when conditions are met
-            if (!directId && effectiveMode === "compact" && prefetchEnabled && !fhirpathExpr) {
-               const r = result as Record<string, unknown>
-               if (r.resourceType === "Bundle" && Array.isArray(r.link) &&
-                  (r.link as Record<string, unknown>[]).some((l) => l?.relation === "next" && typeof l?.url === "string")) {
-                  const c = await coalesce(result, client, logTag, maxResults, t0)
-                  log.debug(`🟢 ${logTag} OK (coalesced ${c.pagesFetched} pages, ${c.entriesReturned} entries)`)
-                  emitAudit({
-                     ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op,
-                     status: c.isError ? "truncated" : "ok", durationMs: auditTime(t0), httpStatus: 200,
-                     prefetchPages: c.pagesFetched, prefetchEntries: c.entriesReturned,
-                     prefetchRawBytes: c.rawBytes, prefetchTruncated: c.truncated || undefined,
-                     ...(c.truncateReason && { prefetchTruncateReason: c.truncateReason }),
-                     responseMode: effectiveMode, compacted: true,
-                  })
-                  return { content: [{ type: "text" as const, text: c.text }], ...(c.isError && { isError: true }) }
-               }
-            }
+      let url: string, search: ReturnType<typeof buildSearchUrl> | undefined
+      const extraNotes: string[] = cap.warning ? [cap.warning] : []
 
-            json = JSON.stringify(result, null, 2)
-            stats = bundleStats(result, json)
-            const sourceBytes = Buffer.byteLength(json, "utf8")
-
-            if (fhirpathExpr) {
-               const fp = applyFhirPath(result, fhirpathExpr)
-               if ("error" in fp) {
-                  emitAudit({ ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op, status: "error", durationMs: auditTime(t0), httpStatus: 200, fhirpathFiltered: true })
-                  return { content: [{ type: "text" as const, text: messages.fhirpathError.replace("{error}", fp.error) }], isError: true }
-               }
-               filtered = true
-               matchCount = fp.nodes.length
-               json = JSON.stringify(fp.nodes, null, 2)
-            }
-
-            if (effectiveMode === "compact") {
-               json = JSON.stringify(compact(JSON.parse(json)))
-               compacted = true
-            }
-
-            const notes = [
-               cap.warning,
-               shape.warn ? messages.countNotAdvertised.replace("{resourceType}", def.resource) : undefined,
-               retries > 0 ? messages.responseAutoRetried
-                  .replace("{original}", String(search ? new URLSearchParams(search.url.split("?")[1] ?? "").get("_count") ?? "?" : "?"))
-                  .replace("{reduced}", String(currentCount)).replace("{limit}", String(config.fhirMaxResponseBytes)) : undefined,
-               responseNote(result, json),
-               filtered ? messages.fhirpathFiltered.replace("{matchCount}", String(matchCount)).replace("{sourceBytes}", String(sourceBytes)) : undefined,
-               wasDefaulted && compacted ? messages.responseModeCompact : undefined,
-            ].filter(Boolean), prefix = notes.length ? notes.join("\n") + "\n\n" : ""
-            shaped = enforceByteLimit(`${prefix}${json}`, config.fhirMaxResponseBytes)
-            if (!shaped.isError || !search || !stats) break
-            const chunked = tryChunkBundle(JSON.parse(json), prefix, config.fhirMaxResponseBytes)
-            if (chunked) {
-               shaped = { text: chunked.text }
-               break
-            }
-            const next = Math.floor((currentCount || stats.entries || config.fhirDefaultCount) / 2)
-            if (next < 1) break
-            currentCount = next
-            retries++
-            url = rebuildWithCount(search.url, currentCount)
-            log.info(`✂️ ${def.resource}: response too large, retrying with _count=${currentCount}`)
-         }
-
-         log.debug(`🟢 ${logTag} OK (${stats?.entries ?? 1}E, ${Buffer.byteLength(json, "utf8")}B, ${auditTime(t0)}ms)`)
-         emitAudit({
-            ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op,
-            status: shaped.isError ? "truncated" : "ok", durationMs: auditTime(t0), httpStatus: 200,
-            jsonBytes: Buffer.byteLength(json, "utf8"),
-            ...(stats && { bundleEntries: stats.entries, bundleTotal: stats.total, hasNext: !!stats.nextUrl }),
-            ...(search && { countInjected: search.countInjected, countCapped: search.countCapped, countSkipped: search.countSkipped }),
-            ...(retries > 0 && { autoRetryCount: retries }),
-            ...(cap.warning && { capWarning: true }),
-            ...(filtered && { fhirpathFiltered: true, fhirpathMatchCount: matchCount }),
-            responseMode: effectiveMode,
-            ...(compacted && { compacted: true }),
-         })
-         return {
-            content: [{ type: "text" as const, text: shaped.text }],
-            ...(shaped.isError && { isError: true }),
-         }
-      } catch (err) {
-         const { log: errLog, client } = formatFhirError(err)
-         log.error(`🔴 ${logTag} ERR ${errLog} (${auditTime(t0)}ms)`)
-         emitAudit({ ts: new Date().toISOString(), tool: toolName, resource: def.resource, operation: op, status: "error", durationMs: auditTime(t0), httpStatus: errorStatus(err) })
-         return { content: [{ type: "text" as const, text: client }], isError: true }
+      if (op === "vread")
+         url = `${def.resource}/${directId}/_history/${guard.versionId}`
+      else if (op === "history-instance")
+         url = buildHistoryUrl(`${def.resource}/${directId}/_history`, since, at, count)
+      else if (op === "history-type")
+         url = buildHistoryUrl(`${def.resource}/_history`, since, at, count)
+      else if (directId)
+         url = `${def.resource}/${directId}`
+      else {
+         const shape = canShapeCount(def.resource)
+         search = buildSearchUrl(def.resource, args, shape.allowed)
+         url = search.url
+         if (shape.warn) extraNotes.push(messages.countNotAdvertised.replace("{resourceType}", def.resource))
       }
+
+      return executeRead({
+         url, tool: toolName, resource: def.resource, op, args, t0,
+         isBundle: !isSingle, allowCoalesce: !isSingle, search, notes: extraNotes,
+      })
    }

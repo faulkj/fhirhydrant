@@ -1,99 +1,55 @@
 {
    "toolNotFound": "Tool \"{toolName}\" is no longer in definitions — restart to apply definition changes",
-   
    "requireOneOfFailed": "Search requires at least one of: {keys}",
-   
    "requireCombinationFailed": "{resourceType} search requires one of these parameter sets: {sets}. Ask the user for the missing values.",
-   
    "countNotAdvertised": "Note: _count was injected but {resourceType} does not advertise it in /metadata.",
-   
    "resourceNotAdvertised": "{resourceType} is not advertised by this FHIR server's /metadata.",
-   
    "paramsNotAdvertised": "search parameter {params} not advertised",
-   
    "includesNotAdvertised": "_include value {values} not in advertised list",
-   
    "revincludesNotAdvertised": "_revinclude value {values} not in advertised list",
-   
    "capabilityMismatch": "{resourceType}: {parts} — per /metadata",
-   
    "capabilityStrict": "{msg}. Remove the unadvertised value or set FHIR_METADATA_MODE=warn.",
-   
    "capabilityWarn": "Note: {msg} — this call may be vendor-specific.",
-   
    "paginationOriginMismatch": "Pagination URL origin \"{actual}\" does not match FHIR server origin \"{expected}\"",
-
    "paginationPathMismatch": "Pagination URL path \"{actual}\" does not match any allowed FHIR base path",
-   
-   "paginationRetryHint": "{message}\n\nRetry with the same url to resume from this page.",
-   
    "capabilitiesUnavailable": "No /metadata available. The server may not support CapabilityStatement, or FHIR_METADATA_MODE is set to off.",
-   
    "responseAutoRetried": "Note: Response exceeded byte limit at _count={original}. Auto-retried with _count={reduced} to fit within {limit} bytes.",
-
-   "invalidDateParam": "\"{param}\" value \"{value}\" is not a valid FHIR date — expected YYYY, YYYY-MM, or YYYY-MM-DD with optional prefix (eq, ne, gt, lt, ge, le, sa, eb, ap)",
-
+   "invalidDateParam": "\"{param}\" value \"{value}\" is not a valid FHIR date/dateTime — expected YYYY[-MM[-DD[THH:MM:SS[.fff][Z|±HH:MM]]]] with optional prefix (eq, ne, gt, lt, ge, le, sa, eb, ap)",
    "responseTooLarge": "Response too large ({bytes} bytes, limit {limit}). Retry with a narrower search, lower _count, date/category/status filters, or use paginate.",
-
    "fhirpathFiltered": "Locally filtered by FHIRPath: {matchCount} node(s) returned from {sourceBytes}-byte response.",
-
    "fhirpathError": "FHIRPath evaluation failed: {error}. Expression was not applied; raw response withheld to respect filter intent.",
-
    "responseModeCompact": "Compact mode applied — pass responseMode=full for raw FHIR JSON.",
-
    "paginationChunked": "Page too large for single response — delivering entries in chunks. Follow the next link to continue.",
    "paginationChunkExpired": "Local chunk expired or evicted. Re-fetch the original server page URL to retry.",
-
    "terminologyInvalidSystem": "Invalid system \"{system}\" — expected \"loinc\" or \"snomed\"",
-   
    "terminologyInvalidCount": "Invalid count \"{count}\" — must be a positive integer (max 50)",
-   
    "terminologyLookupNotFound": "No concept found in {system} for code \"{code}\"",
-   
    "terminologySearchNoResults": "No matches found in {system} for \"{filter}\"",
-
    "terminologyNoMoreResults": "No more results in {system} for \"{filter}\" at offset {offset}",
-
    "terminologyInvalidOffset": "Invalid offset \"{offset}\" — must be a non-negative integer",
-   
    "terminologyError": "Terminology service error: {message}",
-
    "writeNotEnabled": "Write operation \"{action}\" is not enabled — set FHIR_WRITE_CAPABILITIES to allow it",
-
    "writeNotAdvertised": "{resourceType} does not advertise {action} interaction in /metadata",
-
    "writeMissingBody": "{action} requires a 'body' parameter containing valid FHIR JSON",
-
    "writeMissingId": "{action} requires '_id' to identify the target resource",
-
    "writeInvalidBody": "body is not valid JSON: {error}",
-
    "writeResourceTypeMismatch": "body.resourceType ({actual}) does not match tool resource type ({expected})",
-
    "writePatchInvalidFormat": "patch body must be a JSON Patch array (RFC 6902) — expected [{op, path, ...}]",
-
    "writeActionCreate": "Use action=create with body containing full FHIR {resourceType} JSON to create a new resource.",
-   
    "writeActionUpdate": "Use action=update with _id and body containing the complete FHIR {resourceType} JSON to replace an existing resource.",
-   
    "writeActionPatch": "Use action=patch with _id and body containing a JSON Patch array (RFC 6902) to partially update a {resourceType}.",
-   
    "writeActionDelete": "Use action=delete with _id to delete a {resourceType}.",
-
+   "vreadMissingVid": "vread action requires both _id and _vid",
+   "vreadInvalidVid": "_vid value \"{value}\" is not a valid FHIR version id",
+   "vreadNotAdvertised": "{resourceType} does not advertise vread interaction in /metadata",
+   "historyNotAdvertised": "{resourceType} does not advertise {form} history interaction in /metadata",
    "operationNotFound": "Unknown operation \"{key}\" — call capabilities to see available operations",
-
    "operationMissingId": "Operation {operation} requires an id parameter (instance-level invocation)",
-
    "operationMissingBody": "Operation {operation} requires a body parameter containing FHIR JSON",
-
    "operationMissingRequiredParam": "Operation {operation} requires at least one of: {keys}",
-
    "operationMissingResourceType": "Operation {operation} requires a resourceType parameter (polymorphic operation)",
-
    "operationInvalidBody": "Operation {operation} body is not valid JSON: {error}",
-
    "operationScopeBlocked": "Operation {operation} not permitted by granted scopes for {resource}",
-
    "bundleNotEnabled": "Bundle type \"{type}\" is not enabled — set FHIR_BUNDLE_CAPABILITIES to include it",
    "bundleTypeNotAdvertised": "This FHIR server does not advertise \"{type}\" in /metadata system interactions",
    "bundleInvalidBody": "body is not a valid FHIR Bundle: {error}",
@@ -103,4 +59,3 @@
    "bundleWritesDisabled": "Entry {index}: write operation \"{action}\" requires FHIR_BUNDLE_WRITES_ENABLED=true",
    "bundleWriteNotAllowed": "Entry {index}: write operation \"{action}\" is not in FHIR_WRITE_CAPABILITIES"
 }
- 

@@ -49,77 +49,58 @@ export const validateBundleRequest = (body: string): BundleGuardResult => {
          req = entry?.request as Record<string, unknown> | undefined
 
       if (!req || typeof req.method !== "string" || typeof req.url !== "string")
-         return err(messages.bundleEntryUnsupported.replace("{index}", String(i)))
-
-      // Reject conditional request fields
+         return unsupported(i)
       if (req.ifMatch || req.ifNoneMatch || req.ifNoneExist || req.ifModifiedSince)
-         return err(messages.bundleEntryUnsupported.replace("{index}", String(i)))
+         return unsupported(i)
 
-      const
-         method = req.method.toUpperCase(),
-         url = req.url as string
+      const method = req.method.toUpperCase(), url = req.url as string
+      if (url.includes("://") || url.startsWith("/") || url.includes("$")) return unsupported(i)
 
-      // Reject absolute URLs, leading slash, history, operations
-      if (url.includes("://") || url.startsWith("/") || url.includes("_history") || url.includes("$"))
-         return err(messages.bundleEntryUnsupported.replace("{index}", String(i)))
-
-      const
-         [path] = url.split("?"),
-         segments = path.split("/"),
-         resourceType = segments[0],
-         hasId = segments.length > 1 && segments[1].length > 0
+      const [path] = url.split("?"), segments = path.split("/"),
+         resourceType = segments[0], hasId = segments.length > 1 && segments[1].length > 0,
+         hIdx = segments.indexOf("_history")
+      if (hIdx === 0) return unsupported(i) // bare system _history
 
       if (!resourceType || !defs.has(resourceType))
-         return err(messages.bundleEntryBlocked
-            .replace("{index}", String(i))
-            .replace("{reason}", `resource type "${resourceType}" is not configured`))
+         return blocked(i, `resource type "${resourceType}" is not configured`)
 
-      const action = resolveAction(method, hasId)
-      if (!action)
-         return err(messages.bundleEntryUnsupported.replace("{index}", String(i)))
+      // Resolve action — detect vread/history from URL segments
+      let action: ToolAction | undefined, historyOp: string | undefined
+      if (hIdx >= 0 && method === "GET") {
+         if (segments.length === 4 && hIdx === 2 && segments[3]?.length > 0) { action = "vread"; historyOp = "vread" }
+         else if (segments.length === 3 && hIdx === 2 && hasId) { action = "history"; historyOp = "history-instance" }
+         else if (segments.length === 2 && hIdx === 1) { action = "history"; historyOp = "history-type" }
+         else return unsupported(i)
+      } else if (hIdx >= 0) return unsupported(i)
+      else action = resolveAction(method, hasId)
+      if (!action) return unsupported(i)
 
       const allowed = scopeActions(resourceType, scopeMap)
-      if (!allowed.has(action))
-         return err(messages.bundleEntryBlocked
-            .replace("{index}", String(i))
-            .replace("{reason}", `"${action}" not permitted by granted scopes for ${resourceType}`))
+      if (!allowed.has(action)) return blocked(i, `"${action}" not permitted by granted scopes for ${resourceType}`)
+
+      // Metadata interaction check helper
+      const metaWarn = (...interactions: string[]) => {
+         if (!isMetadataAvailable() || config.metadataMode === "off") return undefined
+         const meta = getResourceMeta(resourceType)
+         if (!meta) return `${resourceType} is not advertised in /metadata`
+         return interactions.some((i) => meta.interactions.has(i)) ? undefined : `${resourceType} does not advertise "${interactions[0]}" in /metadata`
+      }
+      const applyWarn = (reason: string | undefined) => {
+         if (!reason) return
+         if (config.metadataMode === "strict") return blocked(i, reason)
+         warning = warning ? `${warning}; ${reason}` : reason
+      }
+
+      if (historyOp) { const r = applyWarn(metaWarn(historyOp)); if (r) return r }
 
       if (WRITE_ACTIONS.has(action)) {
-         if (!config.bundleWritesEnabled)
-            return err(messages.bundleWritesDisabled.replace("{index}", String(i)).replace("{action}", action))
-         if (!config.writeCapabilities.has(action as WriteAction))
-            return err(messages.bundleWriteNotAllowed.replace("{index}", String(i)).replace("{action}", action))
-         if (isMetadataAvailable() && config.metadataMode !== "off") {
-            const meta = getResourceMeta(resourceType)
-            if (!meta) {
-               const reason = `${resourceType} is not advertised in /metadata`
-               if (config.metadataMode === "strict")
-                  return err(messages.bundleEntryBlocked.replace("{index}", String(i)).replace("{reason}", reason))
-               warning = warning ? `${warning}; ${reason}` : reason
-            } else if (!meta.interactions.has(WRITE_INTERACTION[action as WriteAction])) {
-               const reason = `${resourceType} does not advertise "${action}" in /metadata`
-               if (config.metadataMode === "strict")
-                  return err(messages.bundleEntryBlocked.replace("{index}", String(i)).replace("{reason}", reason))
-               warning = warning ? `${warning}; ${reason}` : reason
-            }
-         }
+         if (!config.bundleWritesEnabled) return err(messages.bundleWritesDisabled.replace("{index}", String(i)).replace("{action}", action))
+         if (!config.writeCapabilities.has(action as WriteAction)) return err(messages.bundleWriteNotAllowed.replace("{index}", String(i)).replace("{action}", action))
+         const r = applyWarn(metaWarn(WRITE_INTERACTION[action as WriteAction])); if (r) return r
          writeCount++
       } else {
-         if (isMetadataAvailable() && config.metadataMode !== "off") {
-            const meta = getResourceMeta(resourceType)
-            if (!meta) {
-               const reason = `${resourceType} is not advertised in /metadata`
-               if (config.metadataMode === "strict")
-                  return err(messages.bundleEntryBlocked.replace("{index}", String(i)).replace("{reason}", reason))
-               warning = warning ? `${warning}; ${reason}` : reason
-            } else if (action === "read" ? !meta.interactions.has("read")
-               : !meta.interactions.has("search-type") && !meta.interactions.has("search")) {
-               const label = action === "read" ? "read" : "search-type"
-               const reason = `${resourceType} does not advertise "${label}" in /metadata`
-               if (config.metadataMode === "strict")
-                  return err(messages.bundleEntryBlocked.replace("{index}", String(i)).replace("{reason}", reason))
-               warning = warning ? `${warning}; ${reason}` : reason
-            }
+         if (!historyOp) {
+            const r = applyWarn(metaWarn(...(action === "read" ? ["read"] : ["search-type", "search"]))); if (r) return r
          }
          readCount++
       }
@@ -138,6 +119,11 @@ const
 
    err = (text: string): BundleGuardResult =>
       ({ ok: false, response: { content: [{ type: "text" as const, text }], isError: true } }),
+
+   unsupported = (i: number) => err(messages.bundleEntryUnsupported.replace("{index}", String(i))),
+
+   blocked = (i: number, reason: string) =>
+      err(messages.bundleEntryBlocked.replace("{index}", String(i)).replace("{reason}", reason)),
 
    resolveAction = (method: string, hasId: boolean): ToolAction | undefined => {
       if (method === "GET") return hasId ? "read" : "search"

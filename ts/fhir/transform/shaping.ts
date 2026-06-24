@@ -2,6 +2,8 @@ import { config } from "../../config.ts"
 import { log } from "../../log.ts"
 import { isMetadataAvailable, getResourceMeta } from "../model/metadata.ts"
 
+const MCP_LOCAL = new Set(["action", "body", "fhirpath", "responseMode", "maxResults", "prefetch", "_vid", "_since", "_at"])
+
 /** Returns whether _count injection/capping is allowed for the given resource type given current metadata mode. */
 export const canShapeCount = (resource: string): { allowed: boolean, warn?: boolean } => {
    if (!isMetadataAvailable() || config.metadataMode === "off")
@@ -39,7 +41,7 @@ export const buildSearchUrl = (
 ): { url: string, countInjected: boolean, countCapped: boolean, countSkipped: boolean } => {
    const params = new URLSearchParams()
    for (const [key, val] of Object.entries(args))
-      key !== "action" && key !== "body" && val !== undefined && val !== "" && params.append(key, String(val))
+      !MCP_LOCAL.has(key) && val !== undefined && val !== "" && params.append(key, String(val))
    let countInjected = false, countCapped = false
    const countSkipped = !applyCount
    if (applyCount) {
@@ -66,4 +68,16 @@ export const rebuildWithCount = (url: string, count: number): string => {
       params = new URLSearchParams(qIdx >= 0 ? url.slice(qIdx + 1) : "")
    params.set("_count", String(count))
    return `${base}?${params.toString()}`
+}
+
+/** Builds a FHIR history URL with optional _since, _at, and _count query params. */
+export const buildHistoryUrl = (
+   basePath: string, since?: string, at?: string, count?: number,
+): string => {
+   const params = new URLSearchParams()
+   since && params.append("_since", since)
+   at && params.append("_at", at)
+   count && params.append("_count", String(count))
+   const qs = params.toString()
+   return qs ? `${basePath}?${qs}` : basePath
 }
