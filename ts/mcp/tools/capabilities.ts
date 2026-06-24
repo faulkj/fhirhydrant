@@ -34,8 +34,12 @@ export const addCapabilities = (
                scopeMap = parseGrantedScopes(getTokenResponse().scope),
                operations = getEnabledOperations().map((o) => ({
                   key: o.key, operation: o.operation, resource: o.resource,
-                  level: o.level, method: o.method, params: Object.keys(o.params),
+                  level: o.level, method: o.method,
+                  params: Object.fromEntries(Object.entries(o.params).map(([k, v]) => [k, { description: v.description, type: v.type, ...(v.optional && { optional: true }), ...(v.repeat && { repeat: true }), ...(v.default != null && { default: v.default }) }])),
+                  ...(o.requiresOneOf.length && { requiresOneOf: o.requiresOneOf }),
+                  ...(o.acceptsBody && { acceptsBody: true }),
                   bundleResponse: o.bundleResponse,
+                  ...(o.notes && { notes: o.notes }),
                })),
                skippedOperations = getSkippedOperations(),
                enriched = {

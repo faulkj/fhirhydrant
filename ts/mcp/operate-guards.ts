@@ -10,7 +10,7 @@ let skippedOps: Array<{ key: string; reason: string; gate: "metadata" | "scope" 
 /** Returns operations skipped during gating — for capabilities output. */
 export const getSkippedOperations = (): typeof skippedOps => skippedOps
 
-/** Filters operations against cached /metadata. Operations pass through by default — only blocked if the resource itself is missing from /metadata in strict mode. Unadvertised operation names just log a debug note. */
+/** Filters operations against cached /metadata. In strict mode, operations are skipped when the resource is missing or the operation is not advertised. In warn mode, unadvertised operations are registered with a debug note. */
 export const filterOperationsByMetadata = (
    ops: OperationDefinition[],
 ): OperationDefinition[] => {

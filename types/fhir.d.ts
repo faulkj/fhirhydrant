@@ -119,6 +119,7 @@ interface OperationDefinition {
    auditOperation: string
    affectsState: boolean
    defaultResponseMode: ResponseMode | undefined
+   notes: string | undefined
 }
 
 /** Trimmed, JSON-serializable summary of the FHIR server's CapabilityStatement. */

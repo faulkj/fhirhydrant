@@ -33,6 +33,7 @@ const load = (): OperationDefinition[] => {
       auditOperation: e.auditOperation,
       affectsState: e.affectsState,
       defaultResponseMode: e.defaultResponseMode,
+      notes: e.notes,
    }))
 
    const allowed = config.operations
