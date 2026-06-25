@@ -56,7 +56,7 @@
    },
    {
       "name": "code_search",
-      "description": "Search a terminology system for codes matching a text filter. Use this before querying coded FHIR resources whenever the user provides a plain-language term, abbreviation, or measurement name instead of a precise code. Returns matching code/display pairs. LOINC results support paging via offset — increment offset by count to retrieve subsequent pages. system accepts \"loinc\" or \"snomed\".",
+      "description": "Search a terminology system for codes matching a text filter. After resolving the patient, use this before querying coded FHIR resources whenever the user provides a plain-language term, abbreviation, device name, or measurement name instead of a precise code. Do not skip this by using a broad category or type filter first. Returns matching code/display pairs. LOINC results support paging via offset — increment offset by count to retrieve subsequent pages. system accepts \"loinc\" or \"snomed\".",
       "params": {
          "system": {
             "type": "string",

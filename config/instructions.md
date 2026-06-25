@@ -84,10 +84,13 @@ before interpretation.
    name, DOB, or other demographics. Use the resolved Patient.id for all
    downstream queries.
 
-2. **Resolve clinical concepts before querying.** When the user gives a
-   plain-language term, abbreviation, device name, or measurement type, use
-   `code_search` (if available) to find the correct code before querying clinical resources.
-   Do not assume resource text will contain the user's exact wording.
+2. **Resolve clinical concepts before coded queries.** After resolving the
+   patient, if the user's target concept is not already a code and the next
+   query uses a coded parameter such as `code`, `category`, `type`,
+   `reason-code`, `vaccine-code`, or `service-type`, use `code_search` (if
+   available) before querying that resource. Broad category or type filters are
+   fallbacks, not substitutes for concept/code resolution. Do not assume
+   resource text will contain the user's exact wording.
 
 3. **Prefer structured resources for quantitative analysis.** For values over
    time, query Observation, MedicationRequest, MedicationAdministration, or
