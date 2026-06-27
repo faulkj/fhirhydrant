@@ -1,8 +1,9 @@
 /**
  * Scans a raw FHIR response for OperationOutcome issues (warning/info/error) and
  * builds a one-line note. Detects standalone OperationOutcome resources and Bundle
- * entries (including `search.mode: "outcome"`). PHI-free: emits severity counts and
- * the first short diagnostic only. Returns undefined when there is nothing to surface.
+ * entries (including `search.mode: "outcome"`). PHI-light: emits severity counts plus
+ * the first short server diagnostic, which may carry specifics. Returns undefined when
+ * there is nothing to surface.
  */
 export const outcomeNote = (result: unknown): string | undefined => {
    if (!result || typeof result !== "object") return undefined
