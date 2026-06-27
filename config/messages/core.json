@@ -1,7 +1,8 @@
 {
    "toolNotFound": "Tool \"{toolName}\" is no longer in definitions — restart to apply definition changes",
-   "requireOneOfFailed": "Search requires at least one of: {keys}",
-   "requireCombinationFailed": "{resourceType} search requires one of these parameter sets: {sets}. Ask the user for the missing values.",
+   "requireOneOfFailed": "Blocked before sending (client-side guard): search requires at least one of: {keys}. Provide one of these (or an _id) and retry.",
+   "requireIdOnly": "Blocked before sending (client-side guard): this server only supports {resourceType} lookup by _id, so search is not available. Resolve an _id from a reference on another resource, then retry with _id.",
+   "requireCombinationFailed": "Blocked before sending (client-side guard): {resourceType} search requires one of these parameter sets: {sets}. Ask the user for the missing values, then retry.",
    "countNotAdvertised": "Note: _count was injected but {resourceType} does not advertise it in /metadata.",
    "resourceNotAdvertised": "{resourceType} is not advertised by this FHIR server's /metadata.",
    "paramsNotAdvertised": "search parameter {params} not advertised",

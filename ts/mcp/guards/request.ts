@@ -78,7 +78,15 @@ const
 
       if (!hasId && def.requireOneOf) {
          const ok = def.requireOneOf.some((k) => typeof args[k] === "string" && args[k] !== "")
-         if (!ok) return block(messages.requireOneOfFailed.replace("{keys}", def.requireOneOf.join(", ")), "search", { validationBlocked: true })
+         if (!ok) {
+            const idOnly = def.requireOneOf.length === 1 && def.requireOneOf[0] === "_id"
+            return block(
+               idOnly
+                  ? messages.requireIdOnly.replace("{resourceType}", def.resource)
+                  : messages.requireOneOfFailed.replace("{keys}", def.requireOneOf.join(", ")),
+               "search", { validationBlocked: true },
+            )
+         }
       }
 
       if (!hasId && def.requireCombination) {
