@@ -1,4 +1,4 @@
-import { StdioServerTransport } from "@modelcontextprotocol/server"
+import { StdioServerTransport } from "@modelcontextprotocol/server/stdio"
 import { log } from "../../log.ts"
 
 /** Starts the stdio MCP transport and returns a handle to attach a server and close the connection. */

@@ -69,6 +69,14 @@ export const parseMetadataMode = (): Config["metadataMode"] => {
    return val as Config["metadataMode"]
 }
 
+/** Parses FHIR_VALIDATE_WRITES, defaults to "local". */
+export const parseValidateWrites = (): Config["validateWrites"] => {
+   const val = (opt("FHIR_VALIDATE_WRITES") ?? "local").toLowerCase()
+   if (val !== "off" && val !== "local" && val !== "server")
+      throw new Error(`Invalid FHIR_VALIDATE_WRITES="${val}" — must be "off", "local", or "server"`)
+   return val as Config["validateWrites"]
+}
+
 /** Parses FHIR_RESPONSE_MODE, returns undefined if unset. */
 export const parseResponseMode = (): ConfigResponseMode => {
    const val = opt("FHIR_RESPONSE_MODE")?.toLowerCase()
@@ -93,7 +101,3 @@ export const parsePaginationPaths = (): string[] =>
       ?.split(",")
       .map((s) => s.trim().replace(/^\/?/, "/").replace(/\/*$/, "/"))
       .filter((p) => p.length > 1) ?? []
-
-
-
-

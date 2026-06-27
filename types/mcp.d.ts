@@ -40,6 +40,12 @@ interface ReadOpts {
    notes?: string[]
 }
 
+/** Result of pure client-side write-payload validation — blocking errors and non-blocking warnings. */
+interface WriteBodyValidation {
+   errors: string[]
+   warnings: string[]
+}
+
 /** Result of resource request validation — either success (directId + op) or an early-exit MCP error response. */
 type GuardResult =
    | { ok: true; directId: string | undefined; op: AuditEvent["operation"]; versionId?: string; parsedBody?: unknown }

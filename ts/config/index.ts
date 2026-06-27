@@ -2,6 +2,7 @@ import {
    get, opt, parseTransport, parsePort, parseMetadataMode,
    parseResponseMode, parseAllowedHosts, parsePaginationPaths,
    parseWriteCapabilities, parseOperations, parseFhirVersion,
+   parseValidateWrites,
 } from "./parsers.ts"
 import { parsePositiveInt, parseNonNegativeInt, parseAuditSinks, parseBundleCapabilities, parseLogLevel } from "./parsers-extra.ts"
 import { parseKeys } from "./keys.ts"
@@ -40,6 +41,7 @@ export const config: Config = {
    fhirTerminologyBaseUrl: (opt("FHIR_TERMINOLOGY_BASE_URL")?.replace(/\/+$/, "") || undefined),
    fhirTerminologyTimeoutMs: parsePositiveInt("FHIR_TERMINOLOGY_TIMEOUT_MS", 15000),
    writeCapabilities: parseWriteCapabilities(),
+   validateWrites: parseValidateWrites(),
    operations: parseOperations(),
    prefetchMaxPages: parsePositiveInt("FHIR_PREFETCH_MAX_PAGES", 5),
    prefetchMaxEntries: parsePositiveInt("FHIR_PREFETCH_MAX_ENTRIES", 5000),

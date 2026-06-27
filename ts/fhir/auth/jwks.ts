@@ -1,10 +1,13 @@
 import { createPrivateKey, createPublicKey } from "node:crypto"
+import type { PublicKeyInput } from "node:crypto"
 import { config } from "../../config/index.ts"
 
 const jwksJson: string = JSON.stringify({
    keys: [config.fhirActiveKey, ...config.fhirRetiredKeys].map(({ kid, privateKey }) => {
-      const pub = createPublicKey(createPrivateKey(privateKey)).export({ format: "jwk" }) as Record<string, unknown>
-      return { ...pub, kid, alg: "RS384", use: "sig" }
+      const
+         keyObject = createPublicKey(createPrivateKey(privateKey) as unknown as PublicKeyInput),
+         { kty, n, e } = keyObject.export({ format: "jwk" }) as Record<string, unknown>
+      return { kty, n, e, kid, alg: "RS384", use: "sig" }
    }),
 })
 

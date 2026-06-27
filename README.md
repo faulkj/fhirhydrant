@@ -348,6 +348,7 @@ See [.env.example](.env.example) for a complete sample.
 | `FHIR_REQUEST_TIMEOUT_MS` | `30000` | Per-attempt timeout for outgoing FHIR requests |
 | `FHIR_RESPONSE_MODE` | unset | `compact`, `full`, or `compact-locked`; unset means search defaults compact and direct reads default full |
 | `FHIR_WRITE_CAPABILITIES` | unset | Comma-separated write actions: `create`, `update`, `patch`, `delete` |
+| `FHIR_VALIDATE_WRITES` | `local` | `off`, `local` (client-side structural checks), or `server` (local + server `$validate` preflight for create/update) |
 | `FHIR_BUNDLE_CAPABILITIES` | unset | Comma-separated Bundle types: `batch`, `transaction`; enables `bundle` tool |
 | `FHIR_BUNDLE_WRITES_ENABLED` | `false` | Set to `true` to allow write entries inside Bundles (also requires `FHIR_WRITE_CAPABILITIES`) |
 | `FHIR_OPERATIONS` | unset | Comma-separated operation keys; `none` disables all catalog operations. Default catalog: `everything`, `lastn`, `validate`, `docref`, `expand`, `lookup`, `translate`, `summary`, `match` |

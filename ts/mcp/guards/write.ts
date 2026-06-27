@@ -1,6 +1,8 @@
 import messages from "../../../config/messages/write.json" with { type: "json" }
 import { config } from "../../config/index.ts"
+import { log } from "../../log.ts"
 import { getEnabledActions } from "../validation.ts"
+import { validateWriteBody } from "./validate-write-body.ts"
 
 /** Validates a write-action request: checks capability gates, _id, body presence/shape, and resourceType. */
 export const validateWriteRequest = (
@@ -49,6 +51,14 @@ export const validateWriteRequest = (
          if (action === "update" && id && !body.id)
             (parsedBody as Record<string, unknown>).id = id
       }
+   }
+
+   // Lightweight structural validation (client-side) — runs on the normalized body
+   if (config.validateWrites !== "off" && NEEDS_BODY.has(action)) {
+      const { errors, warnings } = validateWriteBody(parsedBody, action, def.resource)
+      for (const w of warnings) log.warn(`🔎 ${def.resource}.${action} — ${w}`)
+      if (errors.length > 0)
+         return block(messages.validateLocalFailed.replace("{issues}", errors.join("\n")), action, { validationBlocked: true })
    }
 
    return { ok: true, directId: id, op: action, parsedBody }
