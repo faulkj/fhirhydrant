@@ -11,7 +11,7 @@ const
 
 /**
  * Validates a resource tool request: resolves action / direct-read, then checks
- * write guards, requireOneOf, requireCombination, and date constraints.
+ * write guards, requireOneOf, and date constraints.
  */
 export const validateResourceRequest = (
    def: ResourceDefinition, args: Record<string, unknown>, toolName: string, t0: number,
@@ -77,27 +77,22 @@ const
       const hasId = typeof args["_id"] === "string" && args["_id"] !== ""
 
       if (!hasId && def.requireOneOf) {
-         const ok = def.requireOneOf.some((k) => typeof args[k] === "string" && args[k] !== "")
-         if (!ok) {
-            const idOnly = def.requireOneOf.length === 1 && def.requireOneOf[0] === "_id"
-            return block(
-               idOnly
-                  ? messages.requireIdOnly.replace("{resourceType}", def.resource)
-                  : messages.requireOneOfFailed.replace("{keys}", def.requireOneOf.join(", ")),
-               "search", { validationBlocked: true },
-            )
+         const
+            sets = def.requireOneOf,
+            has = (k: string) => typeof args[k] === "string" && args[k] !== ""
+         if (!sets.some((set) => set.every(has))) {
+            const
+               idOnly = sets.length === 1 && sets[0].length === 1 && sets[0][0] === "_id",
+               text =
+                  idOnly
+                     ? messages.requireIdOnly.replace("{resourceType}", def.resource)
+                     : sets.some((s) => s.length > 1)
+                        ? messages.requireCombinationFailed
+                             .replace("{resourceType}", def.resource)
+                             .replace("{sets}", sets.map((s) => s.join(" + ")).join(", or "))
+                        : messages.requireOneOfFailed.replace("{keys}", sets.map((s) => s[0]).join(", "))
+            return block(text, "search", { validationBlocked: true })
          }
-      }
-
-      if (!hasId && def.requireCombination) {
-         const has = (k: string) => typeof args[k] === "string" && args[k] !== ""
-         if (!def.requireCombination.some((combo) => combo.every(has)))
-            return block(
-               messages.requireCombinationFailed
-                  .replace("{resourceType}", def.resource)
-                  .replace("{sets}", def.requireCombination.map((combo) => combo.join(" + ")).join(", or ")),
-               "search", { validationBlocked: true },
-            )
       }
 
       const dateErr = validateDateArgs(args)

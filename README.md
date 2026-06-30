@@ -19,8 +19,8 @@ be expanded, trimmed, or replaced through config files without source changes.
   runtime scope checks
 - Token economy features: compact responses, FHIRPath filtering, byte limits,
   `_count` shaping, and oversized Bundle retry
-- Optional terminology tools, PHI-free audit events, and stdio or Streamable
-  HTTP transport
+- Optional terminology tools, PHI-light audit events (no resource content by
+  default), and stdio or Streamable HTTP transport
 
 > **Note:** FHIR data returned through MCP tool calls may contain PHI.
 > Make sure your MCP client's transcript storage and logging behavior match
@@ -160,9 +160,9 @@ SMART v2 has no separate patch letter, so patch maps to `u`.
 ### Core Tools
 
 `capabilities` returns the cached CapabilityStatement summary, registered and
-skipped tools, search params, operations, and metadata notes. 
+skipped tools, search params, operations, and metadata notes.
 
-`paginate` fetches one Bundle page using a server-returned `next` URL validated 
+`paginate` fetches one Bundle page using a server-returned `next` URL validated
 against the FHIR origin and allowed path prefixes. When compact mode is active
 and the fetched page has more results, paginate automatically coalesces
 multiple upstream pages into one compact response (same behavior as resource
@@ -416,7 +416,7 @@ Everything in `config/` is editable without source changes.
 | `description` | `string` | Tool description |
 | `supportsDirectRead` | `boolean` | Enables `GET /ResourceType/{id}` via `_id` |
 | `searchParams` | `Record<string,string>` | FHIR search params and descriptions |
-| `requireOneOf` | `string[]` | At least one listed param is required for search calls |
+| `requireOneOf` | `(string \| string[])[]` | Search requires at least one option. A string is a single required param; a nested array is a param set where every param is required. `["patient"]` accepts `patient`; `[["given","family"],["identifier"]]` accepts `given`+`family` together, or `identifier` |
 
 `searchParams` values are descriptions, not a full FHIR capability model.
 Server-specific search behavior can still apply.
@@ -466,7 +466,7 @@ MCP client config:
    "status": "ok",
    "mcp": true,
    "metadata": true,
-   "tools": 22,
+   "tools": 23,
    "auth": true,
    "tokenExpiresIn": 287
 }

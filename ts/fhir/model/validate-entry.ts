@@ -54,39 +54,22 @@ export const validateEntry = (
    }
 
    const
+      isParam = (v: unknown): v is string => typeof v === "string" && !!v.trim(),
       rawRequire = entry["requireOneOf"],
       requireOneOf =
-         Array.isArray(rawRequire) && rawRequire.length > 0 && rawRequire.every((v: unknown) => typeof v === "string" && v.trim())
-            ? (rawRequire as string[])
+         Array.isArray(rawRequire) && rawRequire.length > 0 &&
+         rawRequire.every((e: unknown) => isParam(e) || (Array.isArray(e) && e.length > 0 && e.every(isParam)))
+            ? rawRequire.map((e) => Array.isArray(e) ? e as string[] : [e as string])
             : undefined
 
    if (rawRequire !== undefined && !requireOneOf)
-      errors.push(`"${name}": requireOneOf must be a non-empty array of strings when provided`)
+      errors.push(`"${name}": requireOneOf must be a non-empty array of param names or non-empty param-name arrays when provided`)
 
    if (requireOneOf) {
       const paramKeys = new Set(Object.keys(params))
-      for (const key of requireOneOf)
+      for (const key of requireOneOf.flat())
          if (!paramKeys.has(key))
             errors.push(`"${name}": requireOneOf key "${key}" is not in searchParams`)
-   }
-
-   const
-      rawCombo = entry["requireCombination"],
-      requireCombination =
-         Array.isArray(rawCombo) && rawCombo.length > 0 &&
-         rawCombo.every((c: unknown) => Array.isArray(c) && c.length > 0 && c.every((v: unknown) => typeof v === "string" && v.trim()))
-            ? (rawCombo as string[][])
-            : undefined
-
-   if (rawCombo !== undefined && !requireCombination)
-      errors.push(`"${name}": requireCombination must be a non-empty array of non-empty string arrays when provided`)
-
-   if (requireCombination) {
-      const paramKeys = new Set(Object.keys(params))
-      for (const combo of requireCombination)
-         for (const key of combo)
-            if (!paramKeys.has(key))
-               errors.push(`"${name}": requireCombination key "${key}" is not in searchParams`)
    }
 
    return {
@@ -99,6 +82,5 @@ export const validateEntry = (
             ? (params as Record<string, string>)
             : undefined,
       requireOneOf,
-      requireCombination,
    }
 }

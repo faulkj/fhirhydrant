@@ -73,7 +73,6 @@ const parse = (): DefinitionsSnapshot => {
             description: entry.description,
             supportsDirectRead: entry.supportsDirectRead,
             requireOneOf: entry.requireOneOf,
-            requireCombination: entry.requireCombination,
             searchParams: params,
             searchSchema: z.object(buildShape(params, entry.resource, entry.supportsDirectRead)),
          }

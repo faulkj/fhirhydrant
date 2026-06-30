@@ -20,7 +20,7 @@
          "subject": "Patient FHIR ID (raw ID, no Patient/ prefix)",
          "substance": "Suspected causal substance or product"
       },
-      "requireCombination": [["subject", "study"], ["subject", "research-subject"], ["research-subject"]]
+      "requireOneOf": [["subject", "study"], ["subject", "research-subject"], ["research-subject"]]
    },
    {
       "resource": "AllergyIntolerance",
@@ -103,7 +103,7 @@
          "status": "Status: draft, active, on-hold, revoked, completed, entered-in-error, unknown",
          "subject": "Subject of the care plan (Patient or Group)"
       },
-      "requireCombination": [["category", "patient"], ["category", "subject"]]
+      "requireOneOf": [["category", "patient"], ["category", "subject"]]
    },
    {
       "resource": "CareTeam",
@@ -258,7 +258,7 @@
          "subject": "Subject of the list (Patient or Group)",
          "title": "Descriptive name of the list"
       },
-      "requireCombination": [["code", "patient"], ["code", "subject"], ["code", "identifier"], ["code", "encounter"]]
+      "requireOneOf": [["code", "patient"], ["code", "subject"], ["code", "identifier"], ["code", "encounter"]]
    },
    {
       "resource": "Location",
@@ -391,7 +391,7 @@
          "date": "Date or date range (e.g. ge2024-01-01)",
          "status": "Observation status (e.g. final, preliminary)"
       },
-      "requireCombination": [
+      "requireOneOf": [
          ["patient", "category"],
          ["patient", "code"]
       ]
@@ -439,7 +439,7 @@
          "address-state": "State (US states only)",
          "address-postalcode": "Postal / ZIP code"
       },
-      "requireCombination": [
+      "requireOneOf": [
          ["identifier"],
          ["given", "family", "birthdate"],
          ["given", "family", "legal-sex", "telecom"],
@@ -471,7 +471,7 @@
          "phonetic": "A portion of name using phonetic matching",
          "telecom": "Any contact detail value"
       },
-      "requireCombination": [
+      "requireOneOf": [
          ["identifier"],
          ["name"],
          ["given", "family"],
