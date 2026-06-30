@@ -283,10 +283,12 @@ The `http` sink POSTs each audit event to an external collector, SIEM, or FHIR
 audit repository (not the FHIR server itself). Set `FHIR_AUDIT_HTTP_URL` to the
 destination and `FHIR_AUDIT_HTTP_FORMAT` to either `raw` (the internal
 PHI-light audit JSON, for generic collectors such as Splunk HEC or Datadog) or
-`fhir-auditevent` (a FHIR R4 `AuditEvent` resource, recommended for ATNA and
-healthcare audit repositories). An optional `FHIR_AUDIT_HTTP_AUTH` value is sent
-verbatim as the `Authorization` header. Delivery is fire-and-forget with a 5s
-timeout; transport failures are logged and never affect tool responses.
+`fhir-auditevent` (a minimal FHIR R4 `AuditEvent` resource, suitable for
+ATNA-style and FHIR-native audit repositories). The `fhir-auditevent` mapping is
+intentionally lightweight — it is not a full ATNA/BALP compliance profile. An
+optional `FHIR_AUDIT_HTTP_AUTH` value is sent verbatim as the `Authorization`
+header. Delivery is fire-and-forget with a 5s timeout; transport failures are
+logged and never affect tool responses.
 
 Audit events include timestamp, tool, resource type when applicable, operation,
 status, duration, response size, pagination summary, request ID, and optional
