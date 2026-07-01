@@ -1,0 +1,27 @@
+{
+   "resource": "Location",
+   "toolName": "location",
+   "description": "Search for or read a FHIR Location resource for physical places where services are provided. For direct read, provide _id alone. For search, provide identifier, name, organization, partof, address, address-city, or near. Use near with format latitude|longitude|distance|units (WGS84 datum, defaults to km) for proximity searches.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Location resource ID — performs direct read when provided alone",
+      "address": "Any part of the address",
+      "address-city": "City",
+      "address-country": "Country",
+      "address-postalcode": "Postal / ZIP code",
+      "address-state": "State",
+      "address-use": "Use of the address (work, temp, old)",
+      "endpoint": "Technical endpoints providing access to services at this location",
+      "identifier": "Location identifier",
+      "name": "A portion of the location's name or alias",
+      "near": "Search by proximity — format: latitude|longitude|distance|units (WGS84 datum, units default to km)",
+      "operational-status": "Operational status of the location (typically for bed/room)",
+      "organization": "Organization responsible for provisioning and upkeep",
+      "partof": "Parent location reference",
+      "status": "Location status: active, suspended, inactive",
+      "type": "Type of function performed at the location"
+   },
+   "requireOneOf": [
+      "_id"
+   ]
+}

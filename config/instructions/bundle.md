@@ -14,6 +14,5 @@ DELETE) or any transaction Bundle, you must:
 2. State whether the operation is atomic (transaction) or independent (batch).
 3. Ask the user for explicit permission before proceeding.
 
-Do not infer permission from earlier context. Server-side capability gates
-(`FHIR_BUNDLE_WRITES_ENABLED`, `FHIR_WRITE_CAPABILITIES`) are administrative
-controls, not user consent.
+Do not infer permission from earlier context. Server-side capability gates are
+administrative controls, not user consent.

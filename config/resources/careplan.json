@@ -1,0 +1,39 @@
+{
+   "resource": "CarePlan",
+   "toolName": "careplan",
+   "description": "Search for or read a FHIR CarePlan resource describing intended care for a patient. For direct read, provide _id alone. For search, category is REQUIRED (use 734163000 for encounter-level CarePlans) along with patient or subject. Use encounter to narrow to a specific encounter.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "CarePlan resource ID — performs direct read when provided alone",
+      "activity-code": "Detail type of activity (CodeableConcept)",
+      "activity-date": "Specified date of activity occurrence",
+      "activity-reference": "Activity details defined in specific resource (Reference)",
+      "based-on": "Fulfills CarePlan reference",
+      "care-team": "CareTeam reference involved in the plan",
+      "category": "REQUIRED — type of care plan (use 734163000 for encounter-level CarePlans, assess-plan is always included)",
+      "condition": "Health issues (Condition references) the plan addresses",
+      "date": "Time period the plan covers",
+      "encounter": "Encounter FHIR ID to narrow to a specific encounter's CarePlans",
+      "goal": "Desired outcome of plan (Goal reference)",
+      "identifier": "Business identifier",
+      "instantiates-canonical": "Instantiates FHIR protocol or definition",
+      "instantiates-uri": "Instantiates external protocol or definition",
+      "intent": "Intent: proposal, plan, order, option",
+      "part-of": "Part of referenced CarePlan",
+      "patient": "Patient FHIR ID",
+      "performer": "Matches if the practitioner is listed as a performer in any activity",
+      "replaces": "CarePlan replaced by this plan",
+      "status": "Status: draft, active, on-hold, revoked, completed, entered-in-error, unknown",
+      "subject": "Subject of the care plan (Patient or Group)"
+   },
+   "requireOneOf": [
+      [
+         "category",
+         "patient"
+      ],
+      [
+         "category",
+         "subject"
+      ]
+   ]
+}

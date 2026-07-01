@@ -1,0 +1,32 @@
+{
+   "resource": "MedicationRequest",
+   "toolName": "medicationrequest",
+   "description": "Search for or read a FHIR MedicationRequest resource (prescriptions and medication orders). For direct read, provide _id alone. For search, provide patient, subject, identifier, encounter, or requester. Filter by status (active, completed, stopped) or intent (order, plan, proposal).",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "MedicationRequest resource ID — performs direct read when provided alone",
+      "authoredon": "Date the prescription was written",
+      "category": "Medication usage category (e.g. inpatient, outpatient, community)",
+      "code": "Medication code (when coded as CodeableConcept)",
+      "date": "Date or date range for the prescription activity",
+      "encounter": "Encounter during which the request was created",
+      "identifier": "Business identifier",
+      "intended-dispenser": "Intended dispenser (Organization reference)",
+      "intended-performer": "Intended performer (Practitioner, Organization, etc.)",
+      "intended-performertype": "Intended performer type (CodeableConcept)",
+      "intent": "Intent: proposal, plan, order, original-order, reflex-order, filler-order, instance-order, option",
+      "medication": "Medication reference (when medication is a Reference)",
+      "patient": "Patient resource ID or reference",
+      "priority": "Priority: routine, urgent, asap, stat",
+      "requester": "Who requested the prescription",
+      "status": "Status: active, on-hold, cancelled, completed, entered-in-error, stopped, draft, unknown",
+      "subject": "Subject of the request (Patient or Group)"
+   },
+   "requireOneOf": [
+      "patient",
+      "subject",
+      "identifier",
+      "encounter",
+      "requester"
+   ]
+}

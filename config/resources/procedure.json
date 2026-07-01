@@ -1,0 +1,33 @@
+{
+   "resource": "Procedure",
+   "toolName": "procedure",
+   "description": "Search for or read a FHIR Procedure resource for surgical, diagnostic, and therapeutic procedures. For direct read, provide _id alone. For search, provide patient, subject, identifier, encounter, based-on, or part-of. Filter by code (SNOMED CT), date, or status.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Procedure resource ID — performs direct read when provided alone",
+      "based-on": "Reference to the CarePlan or ServiceRequest that authorized the procedure",
+      "category": "Classification of the procedure",
+      "code": "Procedure code (SNOMED CT)",
+      "date": "Date or date range the procedure was performed",
+      "encounter": "Encounter during which the procedure was performed",
+      "identifier": "Business identifier",
+      "instantiates-canonical": "Instantiates FHIR protocol or definition",
+      "instantiates-uri": "Instantiates external protocol or definition",
+      "location": "Where the procedure was performed (Location reference)",
+      "part-of": "Part of referenced event (Procedure, Observation, MedicationAdministration)",
+      "patient": "Patient resource ID or reference",
+      "performer": "Who performed the procedure",
+      "reason-code": "Coded reason the procedure was performed",
+      "reason-reference": "Condition or Observation that is the reason",
+      "status": "Status: preparation, in-progress, not-done, on-hold, stopped, completed, entered-in-error, unknown",
+      "subject": "Subject of the procedure (Patient or Group)"
+   },
+   "requireOneOf": [
+      "patient",
+      "subject",
+      "identifier",
+      "encounter",
+      "based-on",
+      "part-of"
+   ]
+}

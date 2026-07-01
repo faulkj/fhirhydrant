@@ -1,0 +1,44 @@
+{
+   "resource": "Patient",
+   "toolName": "patient",
+   "description": "Search for or read a FHIR Patient resource. For direct read, provide _id alone. For search, this tool enforces strict identification and accepts only one of these parameter sets: identifier (MRN, FHIR ID, or other system|value identifier); given + family + birthdate; or given + family + legal-sex (or gender) + telecom. A name fragment alone is never accepted.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Patient resource ID — performs direct read when provided alone",
+      "family": "Family (last) name",
+      "given": "Given (first) name",
+      "name": "Any part of the patient's name — ignored when family or given is also provided",
+      "birthdate": "Date of birth in YYYY-MM-DD format",
+      "gender": "Administrative gender: female, male, other, unknown",
+      "legal-sex": "Legal sex — takes precedence over gender when both are provided: female, male, nonbinary, x, unknown",
+      "telecom": "Phone number or email address (prefix # to skip phone validation, + for international)",
+      "email": "Email address",
+      "identifier": "Business identifier in system|value format (e.g. MRN, SSN, FHIR ID)",
+      "address": "Street address line",
+      "address-city": "City",
+      "address-state": "State (US states only)",
+      "address-postalcode": "Postal / ZIP code"
+   },
+   "requireOneOf": [
+      [
+         "identifier"
+      ],
+      [
+         "given",
+         "family",
+         "birthdate"
+      ],
+      [
+         "given",
+         "family",
+         "legal-sex",
+         "telecom"
+      ],
+      [
+         "given",
+         "family",
+         "gender",
+         "telecom"
+      ]
+   ]
+}

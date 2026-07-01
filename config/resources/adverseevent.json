@@ -1,0 +1,35 @@
+{
+   "resource": "AdverseEvent",
+   "toolName": "adverseevent",
+   "description": "Search for or read a FHIR AdverseEvent resource tracking harmful events in research contexts. For direct read, provide _id alone. IMPORTANT: Patient-only search is NOT supported — you MUST provide subject + study together, subject + research-subject, or research-subject alone. Do NOT attempt this resource unless you have a ResearchStudy or ResearchSubject FHIR ID. All ID values are raw FHIR IDs (not prefixed with resource type).",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "AdverseEvent resource ID — performs direct read when provided alone",
+      "actuality": "Whether event is actual or potential",
+      "category": "Event category (e.g. product-problem, wrong-dose)",
+      "date": "When the event occurred",
+      "event": "Type of adverse event (coded)",
+      "location": "Location where the event occurred",
+      "recorder": "Who recorded the adverse event (user who first recorded it)",
+      "research-subject": "ResearchSubject FHIR ID (raw ID, no prefix)",
+      "resultingcondition": "Resulting Condition reference",
+      "seriousness": "Seriousness of the event: Serious or Non-Serious",
+      "severity": "Severity: mild, moderate, severe",
+      "study": "ResearchStudy FHIR ID (raw ID, no prefix)",
+      "subject": "Patient FHIR ID (raw ID, no Patient/ prefix)",
+      "substance": "Suspected causal substance or product"
+   },
+   "requireOneOf": [
+      [
+         "subject",
+         "study"
+      ],
+      [
+         "subject",
+         "research-subject"
+      ],
+      [
+         "research-subject"
+      ]
+   ]
+}

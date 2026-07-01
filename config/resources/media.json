@@ -1,0 +1,25 @@
+{
+   "resource": "Media",
+   "toolName": "media",
+   "description": "Search for or read a FHIR Media resource (photos, videos, or audio recordings acquired in healthcare, such as clinical or diagnostic imaging). For direct read, provide _id alone. Media references are often returned by DiagnosticReport; content.url points to a Binary resource holding the actual image or recording data.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Media resource ID — performs direct read when provided alone",
+      "based-on": "ServiceRequest or CarePlan that caused this media to be created",
+      "created": "Date or date range when the media was collected",
+      "device": "Observing device (Device or DeviceMetric reference)",
+      "encounter": "Encounter associated with the media",
+      "identifier": "Identifier(s) for the image",
+      "modality": "Type of acquisition equipment/process (coded)",
+      "operator": "Who generated the image (Practitioner, Organization, CareTeam, Device, Patient, PractitionerRole, RelatedPerson)",
+      "patient": "Patient the media is a record of (Media.subject resolving to Patient)",
+      "site": "Observed body part (coded)",
+      "status": "Status: preparation, in-progress, not-done, on-hold, stopped, completed, entered-in-error, unknown",
+      "subject": "Who/what the media is a record of (Patient, Practitioner, PractitionerRole, Group, Device, Specimen, Location)",
+      "type": "Classification of media: image, video, or audio (coded)",
+      "view": "Imaging view/projection, e.g. lateral or antero-posterior (coded)"
+   },
+   "requireOneOf": [
+      "_id"
+   ]
+}

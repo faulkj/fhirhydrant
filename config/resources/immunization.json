@@ -1,0 +1,29 @@
+{
+   "resource": "Immunization",
+   "toolName": "immunization",
+   "description": "Search for or read a FHIR Immunization resource covering vaccine administration history. For direct read, provide _id alone. For search, provide patient or identifier. Use vaccine-code for specific vaccines or date for time-based filtering.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Immunization resource ID — performs direct read when provided alone",
+      "date": "Vaccination date or date range",
+      "identifier": "Business identifier",
+      "location": "Location where the vaccination was administered",
+      "lot-number": "Vaccine lot number",
+      "manufacturer": "Vaccine manufacturer",
+      "patient": "Patient resource ID or reference",
+      "performer": "Practitioner or organization who performed the vaccination",
+      "reaction": "Additional information on reaction (Observation reference)",
+      "reaction-date": "Date of reaction to the immunization",
+      "reason-code": "Reason the vaccine was administered",
+      "reason-reference": "Condition or Observation why vaccine was given",
+      "series": "Name of the vaccine series",
+      "status": "Status: completed, entered-in-error, not-done",
+      "status-reason": "Reason vaccine was not administered",
+      "target-disease": "Target disease the vaccine protects against",
+      "vaccine-code": "Vaccine product code (CVX)"
+   },
+   "requireOneOf": [
+      "patient",
+      "identifier"
+   ]
+}

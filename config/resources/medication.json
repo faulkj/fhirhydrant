@@ -1,0 +1,21 @@
+{
+   "resource": "Medication",
+   "toolName": "medication",
+   "description": "Search for or read a FHIR Medication resource (drug catalog). For direct read, provide _id alone. For search, provide code, identifier, or another scoping param. This resource describes medication products — use MedicationRequest for prescriptions or MedicationStatement for reported usage.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Medication resource ID — performs direct read when provided alone",
+      "code": "Medication code (e.g. RxNorm, SNOMED CT, NDC)",
+      "expiration-date": "Expiration date of a medication batch",
+      "form": "Dose form (e.g. powder, tablets, capsule)",
+      "identifier": "Business identifier",
+      "ingredient": "Ingredient reference (Reference to Substance or Medication)",
+      "ingredient-code": "Ingredient code (as CodeableConcept)",
+      "lot-number": "Batch lot number",
+      "manufacturer": "Manufacturer reference",
+      "status": "Medication status: active, inactive, entered-in-error"
+   },
+   "requireOneOf": [
+      "_id"
+   ]
+}

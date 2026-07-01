@@ -1,0 +1,24 @@
+{
+   "resource": "CareTeam",
+   "toolName": "careteam",
+   "description": "Search for or read a FHIR CareTeam resource listing people and organizations involved in a patient's care. For direct read, provide _id alone. For search, provide patient, subject, identifier, encounter, or participant. Use status to filter active, inactive, or proposed teams.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "CareTeam resource ID — performs direct read when provided alone",
+      "category": "Type of care team",
+      "date": "Time period the team covers",
+      "encounter": "Encounter associated with the team",
+      "identifier": "Business identifier",
+      "participant": "Who is involved (practitioner, organization, etc.)",
+      "patient": "Patient the care team is for",
+      "status": "Status: proposed, active, suspended, inactive, entered-in-error",
+      "subject": "Subject of the care team (Patient or Group)"
+   },
+   "requireOneOf": [
+      "patient",
+      "subject",
+      "identifier",
+      "encounter",
+      "participant"
+   ]
+}

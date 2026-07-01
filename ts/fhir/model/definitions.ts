@@ -3,6 +3,7 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import * as z from "zod"
 import { validateResources } from "./validate-definitions.ts"
+import { loadResourceFiles } from "./resource-files.ts"
 import { config } from "../../config/index.ts"
 import { log } from "../../log.ts"
 
@@ -17,9 +18,12 @@ export const getSearchControls = (): Record<string, string> => snapshot.searchCo
 
 const configDir = (): string => {
    const
-      bundled = join(dirname(fileURLToPath(import.meta.url)), "../..", "config"),
-      source = join(dirname(fileURLToPath(import.meta.url)), "../../..", "config")
-   return existsSync(join(bundled, "resources.json")) ? bundled : source
+      here = dirname(fileURLToPath(import.meta.url)),
+      candidates = [join(here, "..", "config"), join(here, "../../..", "config")],
+      found = candidates.find((c) => existsSync(join(c, "resources")))
+   if (!found)
+      throw new Error(`config/resources/ not found — looked in: ${candidates.join(", ")}`)
+   return found
 }
 
 /** Returns the absolute path to the config directory (bundled or source mode). */
@@ -44,11 +48,11 @@ export const buildShape = (
 const parse = (): DefinitionsSnapshot => {
    const
       dir = getConfigDir(),
-      rawResources = JSON.parse(readFileSync(join(dir, "resources.json"), "utf8")) as unknown,
+      rawResources = loadResourceFiles(dir),
       rawControls = JSON.parse(readFileSync(join(dir, "search-controls.json"), "utf8")) as unknown,
       result = validateResources(rawResources)
    if (result.errors.length > 0)
-      throw new Error(`config/resources.json: ${result.errors.join("; ")}`)
+      throw new Error(`config/resources/: ${result.errors.join("; ")}`)
 
    if (!rawControls || typeof rawControls !== "object" || Array.isArray(rawControls))
       throw new Error("config/search-controls.json must be a plain object")
@@ -63,7 +67,7 @@ const parse = (): DefinitionsSnapshot => {
       seen = new Set<string>(),
       definitions: ResourceDefinition[] = result.entries.map((entry) => {
          if (seen.has(entry.toolName))
-            throw new Error(`config/resources.json: duplicate toolName "${entry.toolName}"`)
+            throw new Error(`config/resources/: duplicate toolName "${entry.toolName}"`)
          seen.add(entry.toolName)
 
          const params = entry.searchParams ?? {}

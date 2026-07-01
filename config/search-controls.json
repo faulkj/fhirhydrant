@@ -5,6 +5,7 @@
    "_elements": "Comma-separated list of element names to include in each resource (e.g. name,birthDate)",
    "_include": "Include referenced resources in the response Bundle (e.g. Observation:patient)",
    "_revinclude": "Include resources that reference the matched resources (e.g. Provenance:target)",
+   "_lastUpdated": "Filter by when the resource was last changed (e.g. ge2024-01-01) — useful for 'changed since' queries; server-gated per resource",
    "fhirpath": "FHIRPath expression evaluated locally against the FHIR response — use for client-side projection when _elements or _summary are unavailable or insufficient",
    "responseMode": "Response shape: compact (token-efficient) or full (raw FHIR JSON)",
    "maxResults": "Target number of compact results for server-side page coalescing — set high enough for the requested range; a next link after coalescing means more data exists beyond this batch",

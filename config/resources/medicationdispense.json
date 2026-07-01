@@ -1,0 +1,31 @@
+{
+   "resource": "MedicationDispense",
+   "toolName": "medicationdispense",
+   "description": "Search for or read a FHIR MedicationDispense resource recording pharmacy dispensing events (outpatient pickups, inpatient ward stock, single-dose issues). For direct read, provide _id alone. For search, provide patient, subject, identifier, or context. Use status to filter completed, in-progress, or cancelled. Use whenhandedover or whenprepared for date filtering.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "MedicationDispense resource ID — performs direct read when provided alone",
+      "category": "Category of dispense (e.g. inpatient, outpatient, community, discharge)",
+      "code": "Medication code (when coded as CodeableConcept)",
+      "context": "Encounter or EpisodeOfCare associated with the dispense",
+      "destination": "Location where the medication was sent",
+      "identifier": "Business identifier",
+      "medication": "Medication reference (when medication is a Reference)",
+      "patient": "Patient resource ID or reference",
+      "performer": "Who performed the dispense (Practitioner, Organization, Device)",
+      "prescription": "MedicationRequest that authorized this dispense",
+      "receiver": "Who collected the medication (Patient or Practitioner)",
+      "responsibleparty": "Responsible party for substitution (Practitioner)",
+      "status": "Status: preparation, in-progress, cancelled, on-hold, completed, entered-in-error, stopped, declined, unknown",
+      "subject": "Subject of the dispense (Patient or Group)",
+      "type": "Type of dispense (trial fill, partial fill, emergency fill, etc.)",
+      "whenhandedover": "Date the medication was given to the patient",
+      "whenprepared": "Date the medication was packaged and reviewed"
+   },
+   "requireOneOf": [
+      "patient",
+      "subject",
+      "identifier",
+      "context"
+   ]
+}

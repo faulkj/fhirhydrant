@@ -1,0 +1,32 @@
+{
+   "resource": "DiagnosticReport",
+   "toolName": "diagnosticreport",
+   "description": "Search for or read a FHIR DiagnosticReport resource including lab results, pathology, and imaging reports. For direct read, provide _id alone. For search, provide patient, subject, identifier, encounter, or based-on. If filtering by a plain-language report concept, resolve the code with code_search before using code, category, or type-style filters. Use category to filter by discipline (e.g. LAB, RAD). For individual values over time, prefer linked or direct Observation resources.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "DiagnosticReport resource ID — performs direct read when provided alone",
+      "based-on": "Reference to the service request (order) that triggered this report",
+      "category": "Diagnostic discipline/department (e.g. LAB, RAD)",
+      "code": "Report code (LOINC preferred)",
+      "conclusion": "Coded conclusion (interpretation) of the report",
+      "date": "Clinically relevant date or date range",
+      "encounter": "Encounter associated with the report",
+      "identifier": "Business identifier (Placer or Filler)",
+      "issued": "Date/time the report was issued",
+      "media": "Reference to media (images) included in the report",
+      "patient": "Patient resource ID or reference",
+      "performer": "Who is responsible for the report",
+      "result": "Link to atomic result Observation",
+      "results-interpreter": "Who interprets the results",
+      "specimen": "Specimen used for the report",
+      "status": "Report status: registered, partial, preliminary, final, amended, corrected, appended, cancelled, entered-in-error, unknown",
+      "subject": "Subject of the report (Patient or Group)"
+   },
+   "requireOneOf": [
+      "patient",
+      "subject",
+      "identifier",
+      "encounter",
+      "based-on"
+   ]
+}

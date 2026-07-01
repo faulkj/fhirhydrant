@@ -1,4 +1,4 @@
-/** Raw shape of a single entry in config/resources.json. */
+/** Raw shape of a single resource file in config/resources/. */
 interface ResourceDefinitionRaw {
    resource: string
    toolName: string
@@ -19,7 +19,7 @@ interface ResourceDefinition {
    searchSchema: import("zod").ZodObject<import("zod").ZodRawShape>
 }
 
-/** Parsed definitions snapshot built from config/resources.json and config/search-controls.json. */
+/** Parsed definitions snapshot built from config/resources/ and config/search-controls.json. */
 interface DefinitionsSnapshot {
    definitions: ResourceDefinition[]
    scopes: string[]

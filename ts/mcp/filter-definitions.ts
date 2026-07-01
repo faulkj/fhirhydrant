@@ -36,17 +36,29 @@ export const filterByMetadata = (defs: ResourceDefinition[]): { definitions: Res
          continue
       }
 
-      for (const param of Object.keys(def.searchParams)) {
-         if (param === "_id" || param === "_include" || param === "_revinclude") continue
-         if (!meta.searchParams.has(param))
-            log.debug(`🏥 ${def.resource}: "${param}" not in /metadata`)
+      const
+         supported = (param: string) =>
+            ALWAYS_ALLOWED.has(param) || meta.searchParams.has(param),
+         searchParams: Record<string, string> = {}
+      for (const [param, desc] of Object.entries(def.searchParams))
+         if (supported(param)) searchParams[param] = desc
+         else log.debug(`🏥 ${def.resource}: "${param}" not in /metadata — pruned`)
+
+      const pruned = def.requireOneOf?.filter((set) => set.every(supported))
+      if (def.requireOneOf?.length && !pruned?.length) {
+         const reason = `${def.resource} has no satisfiable requireOneOf after metadata pruning`
+         log.debug(`🏥 ${reason} — tool "${def.toolName}" skipped`)
+         skipped.push({ toolName: def.toolName, reason, gate: "metadata" })
+         continue
       }
 
-      enabled.push(def)
+      enabled.push({ ...def, searchParams, requireOneOf: pruned?.length ? pruned : undefined })
    }
 
    return { definitions: enabled, skipped }
 }
+
+const ALWAYS_ALLOWED = new Set(["_id", "_include", "_revinclude"])
 
 /** Filters definitions against granted SMART scopes. Returns surviving definitions and skipped-tool reasons. */
 export const filterByScopes = (

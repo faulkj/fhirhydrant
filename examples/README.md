@@ -23,7 +23,9 @@ fragment list, replacing the default composed instructions.
 
 Docker Compose with a `.env` file. Copy `.env.example` to `.env`, fill in your
 values, then `docker compose up --build`. Good for local development or
-single-server deployments. Overrides `resources.json` with a minimal set.
+single-server deployments. Replaces the `resources/` folder with a minimal
+catalog — its Dockerfile wipes the packaged `config/resources/` before copying,
+since the additive `COPY` alone would leave the default resource files in place.
 
 ### [kubernetes](kubernetes/)
 

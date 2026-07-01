@@ -1,0 +1,29 @@
+{
+   "resource": "AllergyIntolerance",
+   "toolName": "allergyintolerance",
+   "description": "Search for or read a FHIR AllergyIntolerance resource. For direct read, provide _id alone. For search, provide patient or identifier. Use category to filter by food, medication, environment, or biologic. Use clinical-status to filter active, inactive, or resolved allergies.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "AllergyIntolerance resource ID — performs direct read when provided alone",
+      "asserter": "Source of the information (Patient, RelatedPerson, Practitioner)",
+      "category": "Allergy category: food, medication, environment, biologic",
+      "clinical-status": "Clinical status: active, inactive, resolved",
+      "code": "Allergy or intolerance code",
+      "criticality": "Criticality: low, high, unable-to-assess",
+      "date": "Date first recorded",
+      "identifier": "Business identifier",
+      "last-date": "Date of last known occurrence of a reaction",
+      "manifestation": "Clinical symptoms/signs associated with the event",
+      "onset": "Date of onset of the allergy or intolerance",
+      "patient": "Patient resource ID or reference",
+      "recorder": "Who recorded the sensitivity",
+      "route": "Route by which exposure occurred",
+      "severity": "Reaction severity: mild, moderate, severe",
+      "type": "Underlying mechanism: allergy or intolerance",
+      "verification-status": "Verification: unconfirmed, confirmed, refuted, entered-in-error"
+   },
+   "requireOneOf": [
+      "patient",
+      "identifier"
+   ]
+}

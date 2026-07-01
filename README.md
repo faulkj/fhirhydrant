@@ -101,7 +101,7 @@ the console.
 ## Tools
 
 fhirHydrant registers tools from configuration and runtime capability checks.
-The exact list depends on `config/resources.json`, granted SMART scopes,
+The exact list depends on the `config/resources/` folder, granted SMART scopes,
 `/metadata`, write settings, operation settings, and terminology settings.
 
 | Tool or family | Available when | Purpose |
@@ -117,10 +117,11 @@ The exact list depends on `config/resources.json`, granted SMART scopes,
 
 ### Resource Tools
 
-Resource tools are generated from [config/resources.json](config/resources.json).
+Resource tools are generated from the [config/resources/](config/resources/)
+folder — one JSON file per resource (e.g. `patient.json`), scanned at startup.
 The shipped config covers common clinical, administrative, medication,
-practitioner, organization, and document resources. You can expand, trim, or
-replace the resource set without source changes.
+practitioner, organization, and document resources. Add a file to add a
+resource, or delete one to drop it — no source changes required.
 
 Each resource tool supports configured search params, optional direct reads
 with `_id`, `fhirpath`, and, unless compact-locked, `responseMode`. Direct read
@@ -397,7 +398,7 @@ Everything in `config/` is editable without source changes.
 
 | File | Purpose |
 | --- | --- |
-| `resources.json` | FHIR resource tools, search params, direct-read behavior, and `requireOneOf` rules |
+| `resources/*.json` | FHIR resource tools (one file per resource): search params, direct-read behavior, and `requireOneOf` rules |
 | `operations.json` | Named operation catalog for `operate` |
 | `search-controls.json` | Descriptions for `_count`, `_sort`, `_summary`, `_elements`, `_include`, `_revinclude`, `fhirpath`, `responseMode`, `maxResults`, and `prefetch` |
 | `instructions/manifest.json` | Ordered list of instruction fragments to compose, each with an optional `when` gate (`terminology`, `writes`, `operations`, `bundle`). Custom builds reorder, add, or remove sections by editing this file. |
@@ -407,7 +408,9 @@ Everything in `config/` is editable without source changes.
 
 ### Resource Definition Schema
 
-`config/resources.json` is an array of resource definitions:
+Each file in `config/resources/` is a single resource definition object. Files
+are scanned in filename order; the filename is conventionally the lowercase
+resource name (e.g. `patient.json`). Each object has these fields:
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -423,7 +426,7 @@ Server-specific search behavior can still apply.
 
 ### Hot Reload
 
-In development (`NODE_ENV` is not `production`), `resources.json`,
+In development (`NODE_ENV` is not `production`), the `config/resources/` folder,
 `search-controls.json`, and `operations.json` are watched. Invalid JSON keeps
 the last valid snapshot, scope changes restart auth, and behavioral changes are
 picked up on later tool calls. Adding/removing tools, operation schema changes,

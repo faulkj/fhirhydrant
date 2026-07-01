@@ -1,0 +1,13 @@
+{
+   "resource": "Patient",
+   "toolName": "patient",
+   "description": "Search for or read a FHIR Patient resource.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Patient resource ID",
+      "family": "Family (last) name",
+      "given": "Given (first) name",
+      "birthdate": "Date of birth (YYYY-MM-DD)",
+      "identifier": "Business identifier (MRN, SSN, etc.)"
+   }
+}

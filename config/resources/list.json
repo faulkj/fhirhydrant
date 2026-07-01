@@ -1,0 +1,39 @@
+{
+   "resource": "List",
+   "toolName": "list",
+   "description": "Search for or read a FHIR List resource — a curated collection of resources. For direct read, provide _id alone. For search, code is ALWAYS required along with a scoping param. Use code=problems + patient for the problem list, code=medications + patient (+ optionally encounter) for medication reconciliation lists, code=pedigree-list + patient for family history, or code=patients + identifier (system|id format) for patient lists.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "List resource ID — performs direct read when provided alone",
+      "code": "REQUIRED — type of list: problems, medications, pedigree-list, or patients",
+      "date": "When the list was prepared",
+      "empty-reason": "Why the list is empty",
+      "encounter": "Encounter context (for medication lists)",
+      "identifier": "Business identifier in system|value format (for patient lists)",
+      "item": "Reference to an actual entry in the list",
+      "notes": "Free-text notes on the list",
+      "patient": "Patient FHIR ID",
+      "source": "Who authored the list",
+      "status": "Status: current, retired, entered-in-error",
+      "subject": "Subject of the list (Patient or Group)",
+      "title": "Descriptive name of the list"
+   },
+   "requireOneOf": [
+      [
+         "code",
+         "patient"
+      ],
+      [
+         "code",
+         "subject"
+      ],
+      [
+         "code",
+         "identifier"
+      ],
+      [
+         "code",
+         "encounter"
+      ]
+   ]
+}

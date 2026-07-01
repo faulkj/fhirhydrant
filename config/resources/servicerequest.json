@@ -1,0 +1,40 @@
+{
+   "resource": "ServiceRequest",
+   "toolName": "servicerequest",
+   "description": "Search for or read a FHIR ServiceRequest resource (orders and referrals for procedures, diagnostics, therapies). For direct read, provide _id alone. For search, provide patient, subject, identifier, encounter, requester, based-on, or requisition. Use code to identify the service ordered and intent/status to filter.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "ServiceRequest resource ID — performs direct read when provided alone",
+      "authored": "Date request was signed",
+      "based-on": "What request fulfills (CarePlan, MedicationRequest, or ServiceRequest reference)",
+      "body-site": "Where procedure is going to be done (coded body site)",
+      "category": "Classification of service",
+      "code": "What is being requested/ordered (SNOMED CT, LOINC)",
+      "encounter": "Encounter in which this request was made",
+      "identifier": "Business identifier",
+      "instantiates-canonical": "Instantiates FHIR protocol or definition",
+      "instantiates-uri": "Instantiates external protocol or definition",
+      "intent": "Intent: proposal, plan, directive, order, original-order, reflex-order, filler-order, instance-order, option",
+      "occurrence": "When service should occur",
+      "patient": "Patient resource ID or reference",
+      "performer": "Requested performer",
+      "performer-type": "Performer role (CodeableConcept)",
+      "priority": "Priority: routine, urgent, asap, stat",
+      "replaces": "What request replaces (ServiceRequest reference)",
+      "requester": "Who/what is requesting service",
+      "requisition": "Composite request ID (groups related orders)",
+      "specimen": "Specimen to be tested",
+      "status": "Status: draft, active, on-hold, revoked, completed, entered-in-error, unknown",
+      "subject": "Subject of the request (Patient, Group, Location, or Device)",
+      "supporting-info": "Additional clinical information supporting the request"
+   },
+   "requireOneOf": [
+      "patient",
+      "subject",
+      "identifier",
+      "encounter",
+      "requester",
+      "based-on",
+      "requisition"
+   ]
+}

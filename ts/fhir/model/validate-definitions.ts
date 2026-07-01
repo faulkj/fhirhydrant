@@ -1,6 +1,6 @@
 import { validateEntry } from "./validate-entry.ts"
 
-/** Validates the raw config/resources.json array and returns cleaned entries + errors. */
+/** Validates the assembled config/resources/ array and returns cleaned entries + errors. */
 export const validateResources = (raw: unknown): ValidationResult => {
    const errors: string[] = []
 

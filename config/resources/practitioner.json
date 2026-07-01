@@ -1,0 +1,47 @@
+{
+   "resource": "Practitioner",
+   "toolName": "practitioner",
+   "description": "Search for or read a FHIR Practitioner resource. For direct read, provide _id alone. For search, provide at least one of: identifier, name, given + family, email, phone, or telecom. This resource represents healthcare providers — physicians, nurses, pharmacists, etc.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Practitioner resource ID — performs direct read when provided alone",
+      "active": "Whether the record is active",
+      "address": "Any part of the address",
+      "address-city": "City",
+      "address-country": "Country",
+      "address-postalcode": "Postal / ZIP code",
+      "address-state": "State",
+      "address-use": "Use of the address (home, work, temp, old, billing)",
+      "communication": "Language of communication",
+      "email": "Email address",
+      "family": "Family (last) name",
+      "gender": "Gender: male, female, other, unknown",
+      "given": "Given (first) name",
+      "identifier": "Practitioner identifier (e.g. NPI, DEA)",
+      "name": "Any part of the practitioner's name",
+      "phone": "Phone number",
+      "phonetic": "A portion of name using phonetic matching",
+      "telecom": "Any contact detail value"
+   },
+   "requireOneOf": [
+      [
+         "identifier"
+      ],
+      [
+         "name"
+      ],
+      [
+         "given",
+         "family"
+      ],
+      [
+         "email"
+      ],
+      [
+         "phone"
+      ],
+      [
+         "telecom"
+      ]
+   ]
+}

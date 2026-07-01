@@ -1,0 +1,34 @@
+{
+   "resource": "PractitionerRole",
+   "toolName": "practitionerrole",
+   "description": "Search for or read a FHIR PractitionerRole resource linking practitioners to organizations, locations, specialties, and services. For direct read, provide _id alone. For search, provide at least one scoping param such as practitioner, organization, location, role, specialty, or identifier.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "PractitionerRole resource ID — performs direct read when provided alone",
+      "active": "Whether this practitioner role record is active",
+      "date": "The period during which the practitioner is authorized for these roles",
+      "email": "Email address",
+      "endpoint": "Technical endpoints providing access to services",
+      "identifier": "Business identifier",
+      "location": "Location where this practitioner provides care",
+      "organization": "Organization the practitioner represents",
+      "phone": "Phone number",
+      "practitioner": "Practitioner reference",
+      "role": "Role the practitioner may perform (coded)",
+      "service": "Healthcare services provided for this role",
+      "specialty": "Practitioner specialty at this organization",
+      "telecom": "Any contact detail value"
+   },
+   "requireOneOf": [
+      "identifier",
+      "practitioner",
+      "organization",
+      "location",
+      "role",
+      "specialty",
+      "service",
+      "email",
+      "phone",
+      "telecom"
+   ]
+}

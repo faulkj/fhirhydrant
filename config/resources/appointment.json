@@ -1,0 +1,35 @@
+{
+   "resource": "Appointment",
+   "toolName": "appointment",
+   "description": "Search for or read a FHIR Appointment resource for scheduled healthcare events. For direct read, provide _id alone. For search, provide patient, identifier, actor, practitioner, location, slot, or based-on. Use date for time filtering and status to find booked, arrived, or cancelled appointments.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Appointment resource ID — performs direct read when provided alone",
+      "actor": "Any individual participating (patient, practitioner, device, location)",
+      "appointment-type": "Style of appointment booked",
+      "based-on": "Service request (order) that led to this appointment",
+      "date": "Appointment date/time or date range",
+      "identifier": "Business identifier",
+      "location": "Location participant",
+      "part-status": "Participation status of a participant (accepted, declined, tentative, needs-action)",
+      "patient": "Patient participant in the appointment",
+      "practitioner": "Practitioner participant",
+      "reason-code": "Coded reason the appointment is scheduled",
+      "reason-reference": "Condition, Procedure, Observation, or ImmunizationRecommendation reason",
+      "service-category": "Broad service category",
+      "service-type": "Specific service type",
+      "slot": "Slot that this appointment is filling",
+      "specialty": "Practitioner specialty required",
+      "status": "Status: proposed, pending, booked, arrived, fulfilled, cancelled, noshow, entered-in-error, checked-in, waitlist",
+      "supporting-info": "Additional information to support the appointment"
+   },
+   "requireOneOf": [
+      "patient",
+      "identifier",
+      "actor",
+      "practitioner",
+      "location",
+      "slot",
+      "based-on"
+   ]
+}

@@ -1,7 +1,7 @@
 const text = (value: unknown): string | undefined =>
    typeof value === "string" && value.trim() ? value.trim() : undefined
 
-/** Validates a single resource entry from config/resources.json. Returns the entry or pushes errors. */
+/** Validates a single resource entry from config/resources/. Returns the entry or pushes errors. */
 export const validateEntry = (
    value: unknown, seen: Set<string>, errors: string[],
 ): ResourceDefinitionRaw | undefined => {

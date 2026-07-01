@@ -1,0 +1,25 @@
+{
+   "resource": "Organization",
+   "toolName": "organization",
+   "description": "Search for or read a FHIR Organization resource representing companies, institutions, departments, or healthcare practice groups. For direct read, provide _id alone. For search, provide identifier, name, or partof (parent organization).",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Organization resource ID — performs direct read when provided alone",
+      "active": "Whether the organization's record is active",
+      "address": "Any part of the address",
+      "address-city": "City",
+      "address-country": "Country",
+      "address-postalcode": "Postal / ZIP code",
+      "address-state": "State",
+      "address-use": "Use of the address (work, temp, old, billing)",
+      "endpoint": "Technical endpoints providing access to services",
+      "identifier": "Organization identifier (e.g. NPI, OID)",
+      "name": "A portion of the organization's name or alias",
+      "partof": "Parent organization reference",
+      "phonetic": "A portion of the name using phonetic matching",
+      "type": "A code for the type of organization"
+   },
+   "requireOneOf": [
+      "_id"
+   ]
+}

@@ -1,0 +1,28 @@
+{
+   "resource": "Encounter",
+   "toolName": "encounter",
+   "description": "Search for or read a FHIR Encounter resource. Provide an _id for direct read, or search by patient, status, class, or date.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Encounter resource ID — performs direct read when provided alone",
+      "patient": "Patient resource ID or reference",
+      "status": "Encounter status (e.g. finished, in-progress, planned)",
+      "class": "Encounter class (e.g. AMB, IMP, EMER)",
+      "date": "Encounter date or date range (e.g. ge2024-01-01)",
+      "identifier": "Business identifier in system|value format",
+      "type": "Specific type of encounter (coded)",
+      "location": "Location the encounter took place",
+      "practitioner": "Practitioner involved in the encounter",
+      "participant": "Persons involved in the encounter other than the patient",
+      "based-on": "The ServiceRequest that initiated this encounter",
+      "episode-of-care": "EpisodeOfCare the encounter is part of",
+      "part-of": "Another encounter this one is part of",
+      "reason-code": "Coded reason the encounter takes place",
+      "diagnosis": "The diagnosis or procedure relevant to the encounter",
+      "account": "Account billed for the encounter",
+      "appointment": "The appointment that scheduled this encounter"
+   },
+   "requireOneOf": [
+      "patient"
+   ]
+}

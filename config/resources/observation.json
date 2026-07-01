@@ -1,0 +1,36 @@
+{
+   "resource": "Observation",
+   "toolName": "observation",
+   "description": "Search for or read a FHIR Observation resource covering labs, vitals, device measurements, and other structured clinical values. For direct read, provide _id alone. For search, patient is always required plus at least one of category or code. If the user gives a plain-language measurement or device concept and the correct code is uncertain, resolve it with code_search before using category or code filters. Category-only searches are broad fallbacks after code resolution. Common categories: laboratory, vital-signs, core-characteristics. For high-frequency or multi-day data, use compact mode with a high maxResults. Use category=core-characteristics with code 76516-4 (gestational age) or 8339-4 (birth weight) for core characteristic lookups.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Observation resource ID — performs direct read when provided alone",
+      "patient": "Patient resource ID or reference — required for search",
+      "category": "Observation category (e.g. laboratory, vital-signs, core-characteristics)",
+      "code": "LOINC or other observation code",
+      "date": "Date or date range (e.g. ge2024-01-01)",
+      "status": "Observation status (e.g. final, preliminary)",
+      "encounter": "Encounter during which the observation was made",
+      "identifier": "Business identifier",
+      "performer": "Who performed the observation",
+      "device": "Device that generated the observation",
+      "specimen": "Specimen used for the observation",
+      "based-on": "Reference to the request (order) that triggered the observation",
+      "derived-from": "Related resource this observation is derived from",
+      "has-member": "Related component or member observation (e.g. panel members)",
+      "method": "Method used to produce the observation",
+      "part-of": "Larger event this observation is part of",
+      "focus": "What the observation is about, when not the patient",
+      "issued": "Date/time the observation was made available"
+   },
+   "requireOneOf": [
+      [
+         "patient",
+         "category"
+      ],
+      [
+         "patient",
+         "code"
+      ]
+   ]
+}

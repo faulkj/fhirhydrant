@@ -1,0 +1,14 @@
+{
+   "resource": "Observation",
+   "toolName": "observation",
+   "description": "Search for or read a FHIR Observation resource (labs, vitals, etc.).",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Observation resource ID",
+      "patient": "Patient FHIR ID",
+      "category": "Category code (e.g. vital-signs, laboratory)",
+      "code": "LOINC or other code",
+      "date": "Observation date or date range"
+   },
+   "requireOneOf": ["patient"]
+}

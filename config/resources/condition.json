@@ -1,0 +1,26 @@
+{
+   "resource": "Condition",
+   "toolName": "condition",
+   "description": "Search or read FHIR Condition records exposed by the configured FHIR server. For direct read, provide _id alone. For search, provide patient or encounter. Use category to narrow results, such as problem-list-item or encounter-diagnosis. Omitting category returns both types. Returns only resources permitted by the server and granted scopes.",
+   "supportsDirectRead": true,
+   "searchParams": {
+      "_id": "Condition resource ID — performs direct read when provided alone",
+      "patient": "Patient resource ID or reference — required unless encounter is provided",
+      "encounter": "Encounter resource ID — use instead of patient to get diagnoses for a specific encounter",
+      "category": "problem-list-item for problem list entries, encounter-diagnosis for encounter diagnoses; omit for both",
+      "code": "Condition code (ICD-10, SNOMED, etc.)",
+      "clinical-status": "Clinical status: active, resolved, or inactive",
+      "onset-date": "Date the condition began (onset)",
+      "recorded-date": "Date the condition was recorded",
+      "identifier": "Business identifier",
+      "severity": "Severity of the condition (coded)",
+      "stage": "Stage or grade of the condition (coded)",
+      "verification-status": "Verification status: unconfirmed, provisional, confirmed, refuted, entered-in-error",
+      "asserter": "Person or device that asserted the condition",
+      "body-site": "Anatomical location of the condition (coded)"
+   },
+   "requireOneOf": [
+      "patient",
+      "encounter"
+   ]
+}
