@@ -72,6 +72,9 @@ export const validateEntry = (
             errors.push(`"${name}": requireOneOf key "${key}" is not in searchParams`)
    }
 
+   if (entry["trustConfig"] !== undefined && typeof entry["trustConfig"] !== "boolean")
+      errors.push(`"${name}": trustConfig must be a boolean when provided`)
+
    return {
       resource: rt,
       toolName: name,
@@ -82,5 +85,6 @@ export const validateEntry = (
             ? (params as Record<string, string>)
             : undefined,
       requireOneOf,
+      trustConfig: entry["trustConfig"] === true ? true : undefined,
    }
 }

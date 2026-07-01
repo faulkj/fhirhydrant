@@ -5,23 +5,34 @@
    "supportsDirectRead": true,
    "searchParams": {
       "_id": "Observation resource ID — performs direct read when provided alone",
-      "patient": "Patient resource ID or reference — required for search",
+      "based-on": "Reference to the request (order) that triggered the observation",
       "category": "Observation category (e.g. laboratory, vital-signs, core-characteristics)",
       "code": "LOINC or other observation code",
+      "combo-code": "Code for the observation or any of its components (LOINC, SNOMED)",
+      "combo-data-absent-reason": "Why the value is missing on the observation or any of its components",
+      "combo-value-concept": "Coded value of the observation or any of its components",
+      "component-code": "Code of an observation component",
+      "component-data-absent-reason": "Why the value is missing on an observation component",
+      "component-value-concept": "Coded value of an observation component",
+      "data-absent-reason": "Why the observation value is missing",
       "date": "Date or date range (e.g. ge2024-01-01)",
-      "status": "Observation status (e.g. final, preliminary)",
-      "encounter": "Encounter during which the observation was made",
-      "identifier": "Business identifier",
-      "performer": "Who performed the observation",
-      "device": "Device that generated the observation",
-      "specimen": "Specimen used for the observation",
-      "based-on": "Reference to the request (order) that triggered the observation",
       "derived-from": "Related resource this observation is derived from",
+      "device": "Device that generated the observation",
+      "encounter": "Encounter during which the observation was made",
+      "focus": "What the observation is about, when not the patient",
       "has-member": "Related component or member observation (e.g. panel members)",
+      "identifier": "Business identifier",
+      "issued": "Date/time the observation was made available",
       "method": "Method used to produce the observation",
       "part-of": "Larger event this observation is part of",
-      "focus": "What the observation is about, when not the patient",
-      "issued": "Date/time the observation was made available"
+      "patient": "Patient resource ID or reference — required for search",
+      "performer": "Who performed the observation",
+      "specimen": "Specimen used for the observation",
+      "status": "Observation status (e.g. final, preliminary)",
+      "subject": "Subject of the observation (Patient) — equivalent to patient, not usable at the same time",
+      "value-concept": "Coded value of the observation (when the result is a code)",
+      "value-date": "Date/time value of the observation (when the result is a date)",
+      "value-string": "String value of the observation (when the result is text)"
    },
    "requireOneOf": [
       [
@@ -30,6 +41,14 @@
       ],
       [
          "patient",
+         "code"
+      ],
+      [
+         "subject",
+         "category"
+      ],
+      [
+         "subject",
          "code"
       ]
    ]

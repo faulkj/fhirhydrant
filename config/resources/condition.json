@@ -5,22 +5,29 @@
    "supportsDirectRead": true,
    "searchParams": {
       "_id": "Condition resource ID — performs direct read when provided alone",
-      "patient": "Patient resource ID or reference — required unless encounter is provided",
-      "encounter": "Encounter resource ID — use instead of patient to get diagnoses for a specific encounter",
+      "abatement-date": "Date the condition resolved or went into remission",
+      "abatement-string": "Abatement expressed as free text (when not a date)",
+      "asserter": "Person or device that asserted the condition",
+      "body-site": "Anatomical location of the condition (coded)",
       "category": "problem-list-item for problem list entries, encounter-diagnosis for encounter diagnoses; omit for both",
-      "code": "Condition code (ICD-10, SNOMED, etc.)",
       "clinical-status": "Clinical status: active, resolved, or inactive",
-      "onset-date": "Date the condition began (onset)",
-      "recorded-date": "Date the condition was recorded",
+      "code": "Condition code (ICD-10, SNOMED, etc.)",
+      "encounter": "Encounter resource ID — use instead of patient to get diagnoses for a specific encounter",
+      "evidence": "Manifestation or symptom evidence (coded)",
+      "evidence-detail": "Supporting evidence reference for the condition",
       "identifier": "Business identifier",
+      "onset-date": "Date the condition began (onset)",
+      "onset-info": "Onset expressed as free text (when not a date)",
+      "patient": "Patient resource ID or reference — required unless encounter is provided",
+      "recorded-date": "Date the condition was recorded",
       "severity": "Severity of the condition (coded)",
       "stage": "Stage or grade of the condition (coded)",
-      "verification-status": "Verification status: unconfirmed, provisional, confirmed, refuted, entered-in-error",
-      "asserter": "Person or device that asserted the condition",
-      "body-site": "Anatomical location of the condition (coded)"
+      "subject": "Subject of the condition (Patient) — equivalent to patient, not usable at the same time",
+      "verification-status": "Verification status: unconfirmed, provisional, confirmed, refuted, entered-in-error"
    },
    "requireOneOf": [
       "patient",
+      "subject",
       "encounter"
    ]
 }

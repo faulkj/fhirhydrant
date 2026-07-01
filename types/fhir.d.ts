@@ -6,6 +6,7 @@ interface ResourceDefinitionRaw {
    supportsDirectRead: boolean
    searchParams?: Record<string, string>
    requireOneOf?: string[][]
+   trustConfig?: boolean
 }
 
 /** Describes a FHIR resource type and how it maps to an MCP tool. */
@@ -17,6 +18,8 @@ interface ResourceDefinition {
    requireOneOf?: string[][]
    searchParams: Record<string, string>
    searchSchema: import("zod").ZodObject<import("zod").ZodRawShape>
+   /** When true, /metadata searchParam pruning is skipped for this resource — the config is trusted over an under-reporting CapabilityStatement (e.g. Epic hides enabled Medication/Organization search params). Interaction gates and SMART scopes still apply. */
+   trustConfig?: boolean
 }
 
 /** Parsed definitions snapshot built from config/resources/ and config/search-controls.json. */

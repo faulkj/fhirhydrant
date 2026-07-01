@@ -64,6 +64,7 @@ const parse = (): DefinitionsSnapshot => {
             requireOneOf: entry.requireOneOf,
             searchParams: params,
             searchSchema: z.object(buildShape(params, entry.resource, entry.supportsDirectRead)),
+            trustConfig: entry.trustConfig,
          }
       }),
       scopes = definitions.map((d) => {

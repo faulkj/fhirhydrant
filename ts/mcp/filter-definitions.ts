@@ -36,6 +36,12 @@ export const filterByMetadata = (defs: ResourceDefinition[]): { definitions: Res
          continue
       }
 
+      if (def.trustConfig) {
+         log.debug(`🏥 ${def.resource}: trustConfig set — keeping config searchParams over /metadata`)
+         enabled.push(def)
+         continue
+      }
+
       const
          supported = (param: string) =>
             ALWAYS_ALLOWED.has(param) || meta.searchParams.has(param),

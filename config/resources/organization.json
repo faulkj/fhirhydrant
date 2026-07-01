@@ -3,6 +3,7 @@
    "toolName": "organization",
    "description": "Search for or read a FHIR Organization resource representing companies, institutions, departments, or healthcare practice groups. For direct read, provide _id alone. For search, provide identifier, name, or partof (parent organization).",
    "supportsDirectRead": true,
+   "trustConfig": true,
    "searchParams": {
       "_id": "Organization resource ID — performs direct read when provided alone",
       "active": "Whether the organization's record is active",
@@ -20,6 +21,10 @@
       "type": "A code for the type of organization"
    },
    "requireOneOf": [
-      "_id"
+      "_id",
+      "identifier",
+      "name",
+      "address",
+      "partof"
    ]
 }

@@ -5,6 +5,7 @@
    "supportsDirectRead": true,
    "searchParams": {
       "_id": "DocumentReference resource ID — performs direct read when provided alone",
+      "_lastupdated": "Filter by meta.lastUpdated date or date range",
       "authenticator": "Who/what authenticated the document",
       "author": "Who authored the document",
       "category": "Document categorization",

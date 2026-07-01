@@ -3,6 +3,7 @@
    "toolName": "medication",
    "description": "Search for or read a FHIR Medication resource (drug catalog). For direct read, provide _id alone. For search, provide code, identifier, or another scoping param. This resource describes medication products — use MedicationRequest for prescriptions or MedicationStatement for reported usage.",
    "supportsDirectRead": true,
+   "trustConfig": true,
    "searchParams": {
       "_id": "Medication resource ID — performs direct read when provided alone",
       "code": "Medication code (e.g. RxNorm, SNOMED CT, NDC)",
@@ -16,6 +17,8 @@
       "status": "Medication status: active, inactive, entered-in-error"
    },
    "requireOneOf": [
-      "_id"
+      "_id",
+      "code",
+      "identifier"
    ]
 }
